@@ -1,0 +1,8 @@
+__pycache__/
+*/__pycache__/
+.idea/
+
+# Own
+lamia_env/
+lamia/output/*
+temp.dat
