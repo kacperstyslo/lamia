@@ -1,4 +1,9 @@
-from automatic_installation_module import *
+# PSL
+from dataclasses import dataclass
+from typing import Dict
+
+# third-party
+from frozendict import frozendict
 
 
 @dataclass
@@ -7,7 +12,7 @@ class CollectionOfPortsAndServices:
     This class store all ports and services what script can discovered in active host.
     """
 
-    all_ports_and_services: Dict[int, str] = frozendict(
+    _all_ports_and_services: Dict[int, str] = frozendict(
         {
             3: "compressnet",
             5: "rje",

