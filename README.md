@@ -28,7 +28,7 @@
 :exclamation: In Lamia use only keyboard to navigate throughout modules :exclamation:<br/> 
 <details>
     <summary>Click here to see how to run <b>Lamia!</b></summary>
-         If you let, Lamia will **install** all required packages **automatically**.
+         If you let, Lamia will **install** all required packages <b>automatically</b>.
 
          On Windows:
          python run.py

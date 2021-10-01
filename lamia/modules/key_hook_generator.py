@@ -7,7 +7,7 @@ from os import name, remove
 from typing import NoReturn
 
 # Own
-from . import clear_terminal, decorate_text, pause_script, Text, _Path
+from .untils import clear_terminal, decorate_text, pause_script, Text, _Path
 from ..exceptions import WrongUserChoiceError, NotCompatibleSystemYetError, WrongEmailCredentials
 
 

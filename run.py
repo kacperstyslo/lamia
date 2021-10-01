@@ -7,18 +7,19 @@ from sys import exit
 from typing import Callable, Dict, NoReturn
 
 # Third-part
+from elevate import elevate
 from pyfiglet import figlet_format
 
 # Own
-from lamia import GetNetworksAreas
+# from lamia import GetNetworksAreas
 from lamia.exceptions import WrongUserChoiceError
-from lamia.modules import clear_terminal, decorate_text, Text
+from lamia.modules.untils import clear_terminal, decorate_text, Text
 from lamia.modules.user_information import UserDeviceInformation
 from lamia.modules import (
     key_hook_generator,
-    network_scanners,
-    remote_control,
+    remote_control
 )
+from lamia.modules import network_scanners
 
 
 class Lamia:
@@ -32,7 +33,7 @@ class Lamia:
 
     def __init__(self) -> NoReturn:
         self.__lamia_modules: Dict[int, Callable] = {
-            1: network_scanners.NetworkScannersBase().show_included_modules,
+            1: network_scanners.ScannersView.show_modules,
             2: remote_control.RemoteControlModules().remote_control_startup,
             3: key_hook_generator.KeyHookModule().check_system_compatibility,
             0: self.__exit_lamia,
@@ -80,7 +81,10 @@ class Lamia:
 
 
 if __name__ == "__main__":
-    GetNetworksAreas()
+    # TODO install packages for Linux/Windows separately, if package not exists or not compatible install another one
+    # cat requirements.txt | sudo xargs -n 1 pip3 install  -> installation on linux
+    elevate(graphical=False)
+    network_scanners.GetNetworksAreas()
     Lamia().start_up()
 
 # VERSION 2.0

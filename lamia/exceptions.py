@@ -4,7 +4,7 @@ from time import sleep
 from typing import NoReturn
 
 # Own
-from lamia.modules import Text
+from lamia.modules.untils import Text
 
 
 class LamiaError(Exception):
@@ -28,6 +28,7 @@ class LamiaError(Exception):
         sleep(3)
         return ""
 
+
 class PortNumberToSmallError(LamiaError):
     """
     Caller: network_scanners
@@ -35,11 +36,10 @@ class PortNumberToSmallError(LamiaError):
     """
 
     def __init__(self, to_small_port_value: int) -> NoReturn:
-        self._error_msg: str = f"Typed port value: {Text.error}{to_small_port_value}{Text.endc}"
-        f"is too small!\n Minimal port value is 1!"
-
-    def __str__(self) -> str:
-        return LamiaError(self._error_msg).__str__()
+        super().__init__(
+            f"Typed port value: {Text.error}{to_small_port_value}{Text.endc}"
+            f"is too small!\n Minimal port value is 1!"
+        )
 
 
 class PortNumberToLargeError(LamiaError):
@@ -49,11 +49,10 @@ class PortNumberToLargeError(LamiaError):
     """
 
     def __init__(self, to_large_port_value: int) -> NoReturn:
-        self._error_msg: str = f"Typed port value: {Text.error}{to_large_port_value}"
-        f"{Text.endc} is too small!\n Maximum port value is 9999!"
-
-    def __str__(self) -> str:
-        return LamiaError(self._error_msg).__str__()
+        super().__init__(
+            f"Typed port value: {Text.error}{to_large_port_value}"
+            f"{Text.endc} is too small!\n Maximum port value is 9999!"
+        )
 
 
 class WrongUserChoiceError(LamiaError):
@@ -63,10 +62,7 @@ class WrongUserChoiceError(LamiaError):
     """
 
     def __init__(self) -> NoReturn:
-        self._error_msg: str = "Chosen option is not available in this module!"
-
-    def __str__(self) -> str:
-        return LamiaError(self._error_msg).__str__()
+        super().__init__("Chosen option is not available in this module!")
 
 
 class LocalSaveError(LamiaError):
@@ -76,10 +72,7 @@ class LocalSaveError(LamiaError):
     """
 
     def __init__(self) -> NoReturn:
-        self._error_msg: str = "Lamia can't save the file locally! Try again!"
-
-    def __str__(self) -> str:
-        return LamiaError(self._error_msg).__str__()
+        super().__init__("Lamia can't save the file locally! Try again!")
 
 
 class NotCompatibleSystemYetError(LamiaError):
@@ -89,10 +82,7 @@ class NotCompatibleSystemYetError(LamiaError):
     """
 
     def __init__(self, not_supported_system: str) -> NoReturn:
-        self._error_msg: str = f"This module is not yet ready for {not_supported_system} system!"
-
-    def __str__(self) -> str:
-        return LamiaError(self._error_msg).__str__()
+        super().__init__(f"This module is not yet ready for {not_supported_system} system!")
 
 
 class InactiveHostError(LamiaError):
@@ -102,10 +92,7 @@ class InactiveHostError(LamiaError):
     """
 
     def __init__(self, inactive_victim: str) -> NoReturn:
-        self._error_msg: str = f"Selected host: {inactive_victim} is inactive!"
-
-    def __str__(self) -> str:
-        return LamiaError(self._error_msg).__str__()
+        super().__init__(f"Selected host: {inactive_victim} is inactive!")
 
 
 class InvalidNetworkArea(LamiaError):
@@ -115,10 +102,7 @@ class InvalidNetworkArea(LamiaError):
     """
 
     def __init__(self, wrong_network_area: str) -> NoReturn:
-        self._error_msg: str = f"Typed network area: {wrong_network_area} is incorrect!"
-
-    def __str__(self) -> str:
-        return LamiaError(self._error_msg).__str__()
+        super().__init__(f"Typed network area: {wrong_network_area} is incorrect!")
 
 
 class WrongEmailCredentials(LamiaError):
@@ -128,7 +112,4 @@ class WrongEmailCredentials(LamiaError):
     """
 
     def __init__(self) -> NoReturn:
-        self._error_msg: str = "Wrong credentials!"
-
-    def __str__(self) -> str:
-        return LamiaError(self._error_msg).__str__()
+        super().__init__("Wrong credentials!")

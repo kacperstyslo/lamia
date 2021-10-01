@@ -14,7 +14,7 @@ import requests
 from geolite2 import geolite2
 
 # Own
-from . import clear_terminal, Text
+from .untils import clear_terminal, Text
 
 
 class UserDeviceInformation:
@@ -95,22 +95,19 @@ class UserDeviceInformation:
         sleep(1)
         clear_terminal()
         self.__get_user_public_ip()
-        if os.name == "posix":
-            self.__get_posix_root_privileges()
-        elif os.name == "nt" and self._user_public_ip != "Unknown":
-            self.__get_user_device_location()
-            return cleandoc(
-                f"""
-            {47 * "-"}{Text.warning} WAIT {Text.endc}{47 * "-"}
-            Platform: {self._user_operating_system_name} {Text.pass_g} OK! {Text.endc}
-            Version: {self._user_operating_system_version} {Text.pass_g} OK! {Text.endc}
-            IP: {self.user_ip} {Text.pass_g} OK! {Text.endc}
-            {self.__show_user_public_ip()}
-            MAC: {self._user_mac} {Text.pass_g} OK! {Text.endc}
-            Country: {self._country} {"FOUND!" if self._user_public_ip != "Unknown" else "Can't Find"}
-            City: {self._city} {"FOUND!" if self._city != "Unknown" else "Can't Find"}
-            Longitude: {self._longitude} {"FOUND!" if self._city != "Unknown" else "Can't Find"}
-            Latitude: {self._latitude} {"FOUND!" if self._city != "Unknown" else "Can't Find"}
-            {48 * "-"} {Text.pass_g} OK {Text.endc} {48 * "-"}
-                """
-            )
+        self.__get_user_device_location()
+        return cleandoc(
+            f"""
+        {47 * "-"}{Text.warning} WAIT {Text.endc}{47 * "-"}
+        Platform: {self._user_operating_system_name} {Text.pass_g} OK! {Text.endc}
+        Version: {self._user_operating_system_version} {Text.pass_g} OK! {Text.endc}
+        IP: {self.user_ip} {Text.pass_g} OK! {Text.endc}
+        {self.__show_user_public_ip()}
+        MAC: {self._user_mac} {Text.pass_g} OK! {Text.endc}
+        Country: {self._country} {"FOUND!" if self._user_public_ip != "Unknown" else "Can't Find"}
+        City: {self._city} {"FOUND!" if self._city != "Unknown" else "Can't Find"}
+        Longitude: {self._longitude} {"FOUND!" if self._city != "Unknown" else "Can't Find"}
+        Latitude: {self._latitude} {"FOUND!" if self._city != "Unknown" else "Can't Find"}
+        {48 * "-"} {Text.pass_g} OK {Text.endc} {48 * "-"}
+            """
+        )

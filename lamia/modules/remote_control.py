@@ -8,7 +8,7 @@ from typing import NoReturn
 import paramiko
 
 # Own
-from . import clear_terminal, pause_script, Text
+from .untils import clear_terminal, pause_script, Text
 from .user_information import UserDeviceInformation
 
 
@@ -42,7 +42,6 @@ class RemoteControlModules(UserDeviceInformation):
             sleep(1)
             clear_terminal()
             self.remote_control_modules_menu()
-
 
     def remote_control_modules_menu(self) -> NoReturn:
         print(25 * "-" + f"{Text.blue}REMOTE CONTROL MENU {Text.endc}" + 25 * "-")

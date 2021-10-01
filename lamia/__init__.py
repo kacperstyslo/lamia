@@ -1,4 +1,1 @@
-from .modules.network_scanners import NetworksAreasScanner as GetNetworksAreas
-
-
-
+# from .modules.network_scanners.scanners import NetworksAreasScanner as GetNetworksAreas

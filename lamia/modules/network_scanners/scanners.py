@@ -3,26 +3,26 @@ import platform
 import sys
 import socket
 import subprocess
-from os import name, path, system
+from os import path
 from pathlib import Path
 from inspect import cleandoc
 from threading import Thread
-from typing import Dict, List, NoReturn
+from typing import Dict, List, Union, NoReturn
 
 # third-party
 import getmac
 from pythonping import ping
 
 # Own
-from . import clear_terminal, decorate_text, pause_script, Text, _Path
-from .user_information import UserDeviceInformation
-from .ports_and_services import CollectionOfPortsAndServices
-from ..exceptions import (
+from lamia.modules.network_scanners import ui
+from lamia.modules.untils import clear_terminal, pause_script, Text, _Path
+from lamia.modules.user_information import UserDeviceInformation
+from lamia.modules.ports_and_services import CollectionOfPortsAndServices
+from lamia.exceptions import (
     PortNumberToSmallError,
     PortNumberToLargeError,
     InvalidNetworkArea,
     InactiveHostError,
-    WrongUserChoiceError,
 )
 
 
@@ -43,70 +43,42 @@ class NetworkScannersBase(UserDeviceInformation, CollectionOfPortsAndServices):
     - Opened ports and services names running on this ports
     """
 
-    MODULE_KEY: str = ""
+    SCANNER_KEY: str = ""
     SCANNER_MODULES = {}
+
+    __slots__ = ['port_range', 'victim_ip', 'victim_hostname', 'victim_mac_address',
+                 'victim_operation_system_name']
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
-    def __init_subclass__(cls, **kwargs) -> NoReturn:
-        NetworkScannersBase.SCANNER_MODULES[cls.MODULE_KEY] = cls
-
-    def __init__(self) -> NoReturn:
+    def __init__(self, **kwargs) -> NoReturn:
+        print(self.__slots__)
         super().__init__()
         self._victims_data = _Path()
-        self._port_range: int = 0
-        self._victim_ip: str = ""
-        self._victim_hostname: str = ""
-        self._victim_mac_address: str = ""
-        self._victim_operation_system_name: str = ""
+        self._scanners_view = ui.NetworkScannerBaseView()
+        self._port_range: int = kwargs['port_range']
+        self._victim_ip: str = kwargs['victim_ip']
+        self._victim_hostname: str = kwargs["victim_hostname"]
+        self._victim_mac_address: str = kwargs["victim_mac_address"]
+        self._victim_operation_system_name: str = kwargs["victim_operation_system_name"]
         self._network_area_to_scan: List[str] = []
         self._ports_in_percentage: Dict[int, str] = {}
         self._victim_open_ports_and_services: Dict[int, str] = {}
 
-    @classmethod
-    @decorate_text("NETWORK SCANNER LOADING...")
-    def show_included_modules(cls):
-        clear_terminal()
-        print(
-            cleandoc(
-                f"""
-                {38 * "-"}{Text.blue} NETWORK SCANNER MODULES {Text.endc}{38 * "-"}
-                {Text.warning}1.QUICK MODULE {Text.endc}
-                {Text.warning}2.INTENSE MODULE{Text.endc}
-                {Text.warning}3.SINGLE TARGET MODULE{Text.endc}
-                {Text.warning}0.BACK TO MAIN MENU{Text.endc}
-                {100 * "-"}
-            """
-            )
-        )
-        module_choice = input("> ")
-        clear_terminal()
-        if module_choice in cls.SCANNER_MODULES:
-            cls.SCANNER_MODULES[module_choice]().show_menu()
-        else:
-            print(WrongUserChoiceError())
+    def __init_subclass__(cls, **kwargs) -> NoReturn:
+        NetworkScannersBase.SCANNER_MODULES[cls.SCANNER_KEY] = cls
 
-    def chose_network_area_to_scan(self):
+    @classmethod
+    def prepare(cls) -> NoReturn:
+        NetworkScannersBase.SCANNER_MODULES.get(cls.SCANNER_KEY).prepare()
+
+    def chose_network_area_to_scan(self) -> NoReturn:
         while True:
-            clear_terminal()
-            print(
-                cleandoc(
-                    f"""
-              {100 * "-"}
-              Your ip address: {Text.warning}{self.user_ip}{Text.endc}
-              If you want to scan your network type: {Text.warning}{".".join(self.user_ip.split(".")[0:3])}{Text.endc}
-              {100 * "-"}
-            """
-                )
-            )
+            self._scanners_view.show_communicate_while_user_choosing_network_area()
             self._network_area_to_scan = self.verify_network_area()
             if isinstance(self._network_area_to_scan, list):
                 break
-        self._victims_data.output_path = (
-            f"scanned_network_area_{'.'.join(self._network_area_to_scan[0].split('.')[:3])}.txt"
-        )
-        clear_terminal()
 
     @staticmethod
     def verify_network_area() -> List[str]:
@@ -120,9 +92,10 @@ class NetworkScannersBase(UserDeviceInformation, CollectionOfPortsAndServices):
             return [f"{correct_ip}{num}" for num in range(1, 255)]
         print(InvalidNetworkArea(".".join(ip_to_verify)))
 
-    def prepare_module_to_scan(self) -> NoReturn:
-        self.specify_port_range()
-        self.show_output_location()
+    def set_output_path(self, file_name: str, target: Union[str, List[str]]) -> NoReturn:
+        if isinstance(target, list):
+            target = ".".join(self._network_area_to_scan[0].split(".")[:3])
+        self._victims_data.output_path = f"{file_name}{target}.txt"
 
     def specify_port_range(self) -> NoReturn:
         """
@@ -152,28 +125,6 @@ class NetworkScannersBase(UserDeviceInformation, CollectionOfPortsAndServices):
                 raise ValueError(f"The given value is not an {Text.error}int{Text.endc} type!")
             clear_terminal()
 
-    def show_output_location(self) -> NoReturn:
-        """
-        This method show path to output location where module will save all gathering data about
-        victim/victims after scan.
-        """
-        clear_terminal()
-        print(
-            cleandoc(
-                f"""
-          {100 * "-"}
-          Script will save all results in this location: {Text.warning}{self._victims_data.output_path}{Text.endc}
-          {100 * "-"}
-        """
-            )
-        )
-        pause_script()
-
-    @staticmethod
-    def show_start_up_scanning_message() -> str:
-        clear_terminal()
-        return f"Module has started scanning! Pleas {Text.warning}wait{Text.endc}..."
-
     def scan_victim_generally(self) -> NoReturn:
         """
         This method will get the below information about chosen victim.
@@ -187,19 +138,16 @@ class NetworkScannersBase(UserDeviceInformation, CollectionOfPortsAndServices):
         self._victim_hostname: str = self.__get_victim_hostname()
         self._victim_mac_address: str = getmac.get_mac_address(ip=self._victim_ip)
         self._victim_operation_system_name: str = self.__get_victim_operation_system_name()
-        print(
-            cleandoc(
-                f"""
-        {38 * "="}{Text.pass_g} {self._victim_ip} is {Text.endc}{Text.pass_g}ACTIVE {Text.endc}{38 * "="}
-        Platform: {Text.warning}{self._victim_operation_system_name}{Text.endc}
-        Hostname: {Text.warning}{self._victim_hostname}{Text.endc}
-        IP: {Text.warning}{self._victim_ip}{Text.endc}
-        MAC: {Text.warning}{self._victim_mac_address}{Text.endc}
-        """
-            )
+        self._scanners_view.show_captured_victim_data(
+            victim_ip=self._victim_ip,
+            victim_operation_system_name=self._victim_operation_system_name,
+            victim_hostname=self._victim_hostname,
+            victim_mac_address=self._victim_mac_address,
         )
         self.__get_victim_opened_ports_with_services()
-        self.__show_victim_opened_ports_with_services()
+        self._scanners_view.show_victim_opened_ports_with_services(
+            victim_open_ports_and_services=self._victim_open_ports_and_services, victim_ip=self._victim_ip,
+            victim_hostname=self._victim_hostname)
         self.__save_captured_victim_data_locally()
 
     def __generate_port_number_scale_in_percentage(self) -> NoReturn:
@@ -255,16 +203,6 @@ class NetworkScannersBase(UserDeviceInformation, CollectionOfPortsAndServices):
                 )  # port: service
             sock.close()
 
-    def __show_victim_opened_ports_with_services(self) -> NoReturn:
-        for port, service in self._victim_open_ports_and_services.items():
-            print(
-                f"Host {Text.warning}{self._victim_hostname}{Text.endc} "
-                f"with IP: {Text.warning}{self._victim_ip}{Text.endc} "
-                f"has an open port: {Text.warning}{port}{Text.endc}. "
-                f"with listening service: {Text.warning}{service}{Text.endc}"
-            )
-        print(100 * "=" + "\n")
-
     def __save_captured_victim_data_locally(self) -> NoReturn:
         with open(self._victims_data.output_path, "a", encoding="utf-8") as victim_data:
             victim_data.write(100 * "=" + "\n")
@@ -277,57 +215,16 @@ class NetworkScannersBase(UserDeviceInformation, CollectionOfPortsAndServices):
             victim_data.write(100 * "=" + "\n")
             self._victim_open_ports_and_services.clear(), self._ports_in_percentage.clear()
 
-    def show_captured_victims_data(self) -> NoReturn:
-        print(
-            cleandoc(
-                f"""
-              {100 * "-"}
-              {Text.pass_g}SCANNING IS COMPLETE!{Text.endc}
-            """
-            )
-        )
-        pause_script()
-        clear_terminal()
-        system(fr"more {self._victims_data.output_path}") if name == "nt" else system(
-            fr"less {self._victims_data.output_path}"
-        )
-        print(
-            cleandoc(
-                f"""
-            All results are saved here: {Text.pass_g}{self._victims_data.output_path}{Text.endc}
-            {100 * "-"}
-            """
-            )
-        )
-        pause_script()
-
 
 class NetworkScannerQuick(NetworkScannersBase):
-    MODULE_KEY: str = "1"
+    SCANNER_KEY: str = "1"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
-    def show_menu(self) -> NoReturn:
-        clear_terminal()
-        print(
-            cleandoc(
-                f"""
-            {35 * "-"}{Text.blue} NETWORK SCANNER MODULE QUICK {Text.endc}{35 * "-"}
-            {Text.blue}QUICK{Text.endc} module will find all {Text.pass_g}ACTIVE{Text.endc}
-            hosts in chosen network area and display their {Text.warning}IP{Text.endc} address.
-            After scanning chosen network area, output won't be saved!
-            Do you want to continue? {Text.warning}Y/N{Text.endc}
-            {100 * "-"}
-            """
-            )
-        )
-        menu_choice = str(input("> "))
-        if menu_choice.upper() == "Y":
-            self.chose_network_area_to_scan()
-            self.__run_quick_scan()
-        elif not menu_choice.upper() == "N":
-            print(WrongUserChoiceError())
+    def prepare(self) -> NoReturn:
+        self.chose_network_area_to_scan()
+        self.__run_quick_scan()
 
     def __run_quick_scan(self) -> NoReturn:
         active_victims: List[str] = []
@@ -344,80 +241,45 @@ class NetworkScannerQuick(NetworkScannersBase):
 
 
 class NetworkScannerIntense(NetworkScannersBase):
-    MODULE_KEY: str = "2"
+    SCANNER_KEY: str = "2"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
-    def show_menu(self) -> NoReturn:
-        clear_terminal()
-        print(
-            cleandoc(
-                f"""
-    {34 * "-"}{Text.blue} NETWORK SCANNER INTENSE MODULE {Text.endc}{34 * "-"}
-    Intense module will search for active hosts in chosen network area, if module find a host, 
-    module will try to get as much information as possible about this active host. 
-    For example, module will try to find the:
-    -{Text.warning} IP ADDRESS {Text.endc}
-    -{Text.warning} MAC ADDRESS {Text.endc}
-    -{Text.warning} HOSTNAME {Text.endc}
-    -{Text.warning} OPERATING SYSTEM NAME {Text.endc}
-    This script will search for all open ports on this active host, if any are if any are open it
-    will try to find out what services work on these ports.
-    Do you want to continue? {Text.warning}Y/N{Text.endc}
-    {100 * "-"}"""
-            )
+    def prepare(self) -> NoReturn:
+        print("here")
+        self.chose_network_area_to_scan()
+        self.set_output_path(
+            file_name="scanned_network_area_",
+            target=self._network_area_to_scan,
         )
-        menu_choice: str = str(input("> "))
-        if menu_choice.upper() == "Y":
-            self.chose_network_area_to_scan()
-            self.prepare_module_to_scan()
-            self.__run_intense_network_area_scan()
-        elif not menu_choice.upper() == "N":
-            print(WrongUserChoiceError())
-        clear_terminal()
+        self.specify_port_range()
+        self._scanners_view.show_output_location(
+            output_location=self._victims_data.output_path
+        )
+        self.__run_intense_network_area_scan()
 
     def __run_intense_network_area_scan(self) -> NoReturn:
         """
         This module start up all methods, which that gathering information about victims for chosen
         network area.
         """
-        print(self.show_start_up_scanning_message())
+        print(self._scanners_view.show_start_up_scanning_message())
         for victim_ip in self._network_area_to_scan:
             if self.quick_check_if_victim_is_active(victim_ip):
                 self.scan_victim_generally()
-        print(self.show_captured_victims_data())
+        self._scanners_view.show_saved_victims_data(self._victims_data.output_path)
 
 
 class NetworkScannerSingleTarget(NetworkScannersBase):
-    MODULE_KEY: str = "3"
+    SCANNER_KEY: str = "3"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
-    def show_menu(self) -> NoReturn:
-        print(
-            cleandoc(
-                f"""
-            {31 * "-"}{Text.blue} NETWORK SCANNER SINGLE TARGET MODULE {Text.endc}{31 * "-"}
-            By using this module you can thoroughly scan one selected host. If host is active, module will receive:
-            -{Text.warning} IP ADDRESS {Text.endc}
-            -{Text.warning} MAC ADDRESS {Text.endc}
-            -{Text.warning} HOSTNAME {Text.endc}
-            -{Text.warning} OPERATING SYSTEM NAME {Text.endc}
-            Script will also quickly scan {Text.warning}PORTS{Text.endc}, if host has some
-            ports open module will try to detect what {Text.warning}SERVICES{Text.endc} running on this ports.
-            Do you want to continue? {Text.warning}Y/N{Text.endc}
-            {100 * "-"}
-            """
-            )
-        )
-        menu_choice: str = str(input("> "))
-        clear_terminal()
-        if menu_choice.upper() == "Y":
-            self.__chose_victim()
-        elif not menu_choice.upper() == "N":
-            print(WrongUserChoiceError())
+    def prepare(self) -> NoReturn:
+        self.specify_port_range()
+        self.__chose_victim()
 
     def __chose_victim(self) -> NoReturn:
         clear_terminal()
@@ -436,18 +298,20 @@ class NetworkScannerSingleTarget(NetworkScannersBase):
         ):
             InactiveHostError(host_to_check_is_active)
         elif self.quick_check_if_victim_is_active(host_to_check_is_active):
-            self._victims_data.output_path = f"scanned_victim_{self._victim_ip}.txt"
-            self.prepare_module_to_scan()
+            self.set_output_path(file_name="scanned_victim_", target=self._victim_ip)
+            self._scanners_view.show_output_location(
+                output_location=self._victims_data.output_path
+            )
             self.__run_single_victim_scan()
 
     def __run_single_victim_scan(self) -> NoReturn:
-        print(self.show_start_up_scanning_message())
+        print(self._scanners_view.show_start_up_scanning_message())
         self.scan_victim_generally()
-        self.show_captured_victims_data()
+        self._scanners_view.show_saved_victims_data(self._victims_data.output_path)
 
 
 class NetworksAreasScanner(NetworkScannersBase):
-    r"""
+    """
     This module runs in the background and scans network for others possible network areas that
     user can latter scan more detailed using some of built in modules in Lamia. All
     captured network areas will be saved in lamia\saved_data\captured_networks_areas.txt
