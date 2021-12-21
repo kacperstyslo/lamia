@@ -1,13 +1,10 @@
-# PSL
 import os
 import socket
 from time import sleep
 from typing import NoReturn
 
-# third-party
 import paramiko
 
-# Own
 from .untils import clear_terminal, pause_script, Text
 from .user_information import UserDeviceInformation
 
@@ -44,7 +41,9 @@ class RemoteControlModules(UserDeviceInformation):
             self.remote_control_modules_menu()
 
     def remote_control_modules_menu(self) -> NoReturn:
-        print(25 * "-" + f"{Text.blue}REMOTE CONTROL MENU {Text.endc}" + 25 * "-")
+        print(
+            25 * "-" + f"{Text.blue}REMOTE CONTROL MENU {Text.endc}" + 25 * "-"
+        )
         print(f"{Text.warning}1.SSH{Text.endc}")
         print(f"{Text.warning}2.ANANKE{Text.endc}")
         print(f"{Text.warning}0.BACK TO MAIN MENU{Text.endc}")
@@ -62,9 +61,13 @@ class RemoteControlModules(UserDeviceInformation):
                 self.check_default_ananke = os.path.abspath(
                     rf"C:\Users\{self._user_hostname}\Desktop"
                 )
-                self.check_default_ananke = rf"C:\Users\{self._user_hostname}\Desktop\ananke.py"
+                self.check_default_ananke = (
+                    rf"C:\Users\{self._user_hostname}\Desktop\ananke.py"
+                )
             except OSError:
-                print(f"{Text.error}ERROR!{Text.endc} I have problems with save!")
+                print(
+                    f"{Text.error}ERROR!{Text.endc} I have problems with save!"
+                )
                 sleep(2)
             clear_terminal()
             with open(self.check_default_ananke, "w") as f:
@@ -218,7 +221,7 @@ class Ananke:
     -c --command               - inicjuje wiersz polecen
     -u --upload=destination    - po nawiazaniu polaczenia wysyła plik i zapisuje go w [destination]
     -t -target                  - adres ip
-    Przyklady: 
+    Przyklady:
     ananke.py -t 192.168.0.1 -p 5555 -l -c
     ananke.py -t 192.168.0.1 -p 5555 -l -u=c:\\target.exe
     ananke.py -t 192.168.0.1 -p 5555 -l -e=\"cat /etc/passwd\
@@ -226,12 +229,12 @@ class Ananke:
     Rozpoczecie nasluchiwania:
     python3 ananke.py -l -p 1234 -c
     Nawiazywanie polaczenia z nasluchujacym komputerem:
-    python3 ananke.py -t 192.168.0.1 -p 1234 
+    python3 ananke.py -t 192.168.0.1 -p 1234
     Ewentualnie:
     Rozpoczecie nasluchiwania:
     python ananke.py -l -p 1234 -c
     Nawiazywanie polaczenia z nasluchujacym komputerem:
-    python ananke.py -t 192.168.0.1 -p 1234 
+    python ananke.py -t 192.168.0.1 -p 1234
     ''')
         sys.exit(0)
 
@@ -241,7 +244,9 @@ if __name__ == '__main__':
             """
                 )
             clear_terminal()
-            print(f"Script will save here: {Text.warning}{self.check_default_ananke}{Text.endc}")
+            print(
+                f"Script will save here: {Text.warning}{self.check_default_ananke}{Text.endc}"
+            )
             pause_script()
 
 
@@ -273,18 +278,28 @@ class SSH:
         clear_terminal()
         print(30 * "-" + f"{Text.blue}SSH MODULE{Text.endc}" + 30 * "-")
         sleep(0.25)
-        print(f"After connection if you want to disconnect type {Text.warning}0{Text.endc}")
+        print(
+            f"After connection if you want to disconnect type {Text.warning}0{Text.endc}"
+        )
         ip_ssh: str = str(input(f"Type {Text.warning}IP{Text.endc}: "))
-        port_ssh: str = str(input(f"Type {Text.warning}Port number{Text.endc}: "))
+        port_ssh: str = str(
+            input(f"Type {Text.warning}Port number{Text.endc}: ")
+        )
         login_shh: str = str(input(f"Type {Text.warning}Login{Text.endc}: "))
-        password_ssh: str = str(input(f"Type {Text.warning}Password{Text.endc}: "))
+        password_ssh: str = str(
+            input(f"Type {Text.warning}Password{Text.endc}: ")
+        )
         clear_terminal()
         try:
             while True:
                 client = paramiko.SSHClient()
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 client.connect(
-                    ip_ssh, port=int(port_ssh), username=login_shh, password=password_ssh, timeout=5
+                    ip_ssh,
+                    port=int(port_ssh),
+                    username=login_shh,
+                    password=password_ssh,
+                    timeout=5,
                 )
                 ssh_session = client.get_transport().open_session()
                 if ssh_session.active:

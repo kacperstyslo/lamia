@@ -2,12 +2,10 @@
 All build in lamia exceptions.
 """
 
-# PSL
 from inspect import cleandoc
 from time import sleep
 from typing import NoReturn
 
-# Own
 from lamia.modules.untils import Text
 
 
@@ -87,7 +85,9 @@ class NotCompatibleSystemYetError(LamiaError):
     """
 
     def __init__(self, not_supported_system: str) -> NoReturn:
-        super().__init__(f"This module is not yet ready for {not_supported_system} system!")
+        super().__init__(
+            f"This module is not yet ready for {not_supported_system} system!"
+        )
 
 
 class InactiveHostError(LamiaError):
@@ -107,7 +107,9 @@ class InvalidNetworkArea(LamiaError):
     """
 
     def __init__(self, wrong_network_area: str) -> NoReturn:
-        super().__init__(f"Typed network area: {wrong_network_area} is incorrect!")
+        super().__init__(
+            f"Typed network area: {wrong_network_area} is incorrect!"
+        )
 
 
 class WrongEmailCredentials(LamiaError):

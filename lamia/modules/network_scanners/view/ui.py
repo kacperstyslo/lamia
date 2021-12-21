@@ -8,12 +8,10 @@ __all__ = (
     "NetworkScannerSingleTargetUI",
 )
 
-# PSL
 from inspect import cleandoc
 from os import name, system
 from typing import List, NoReturn
 
-# Own
 from lamia.modules.user_information import UserDeviceInformation
 from lamia.modules.untils import clear_terminal, pause_script, Text
 
@@ -113,7 +111,9 @@ class NetworkScannerBaseUI(UserDeviceInformation):
         )
         pause_script()
         clear_terminal()
-        system(fr"more {output_location}") if name == "nt" else system(fr"less {output_location}")
+        system(fr"more {output_location}") if name == "nt" else system(
+            fr"less {output_location}"
+        )
         print(
             cleandoc(
                 f"""
@@ -133,7 +133,9 @@ class NetworkScannerQuickUI:
     @staticmethod
     def show_quick_scan_output(active_victims: List[str]) -> NoReturn:
         for victim in active_victims:
-            print(f"Victim with IP: {victim} is {Text.pass_g}ACTIVE!{Text.endc}")
+            print(
+                f"Victim with IP: {victim} is {Text.pass_g}ACTIVE!{Text.endc}"
+            )
         pause_script()
 
 

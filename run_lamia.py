@@ -3,13 +3,12 @@ From here lamia call all modules.
 """
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python3
-# PSL
+
 from os import name, system
 from inspect import cleandoc
 from sys import exit
 from typing import Callable, Dict, NoReturn
 
-# Third-part
 try:
     __import__("imp").find_module("maxminddb-geolite2")
 except ImportError:
@@ -19,7 +18,6 @@ except ImportError:
     from elevate import elevate
     from pyfiglet import figlet_format
 
-# Own
 from lamia.exceptions import WrongUserChoiceError
 from lamia.modules.untils import clear_terminal, decorate_text, Text
 from lamia.modules.user_information import UserDeviceInformation
@@ -44,13 +42,15 @@ class Lamia:
             0: self.__exit_lamia,
         }
 
-    @decorate_text(figlet_format("Lamia   2 . 0"))
+    @decorate_text(figlet_format("Lamia   2 . 2"))
     def start_up(self):
         """
         When Lamia start's this function call build in Lamia functions in proper order.
         """
         print(UserDeviceInformation().get_user_device_information())
-        system("pause") if name == "nt" else input("Press any key to continue...")
+        system("pause") if name == "nt" else input(
+            "Press any key to continue..."
+        )
         self.__lamia_menu()
 
     def __lamia_menu(self) -> NoReturn:
@@ -63,7 +63,7 @@ class Lamia:
             print(
                 cleandoc(
                     f"""
-        {42 * "-"}{Text.blue}LAMIA VER.2.0{Text.endc}{42 * "-"}
+        {42 * "-"}{Text.blue}LAMIA VER.2.2{Text.endc}{42 * "-"}
         {Text.warning}1.NETWORK SCANNER{Text.endc}
         {Text.warning}2.REMOTE CONTROL{Text.endc}
         {Text.warning}3.KEY-HOOK GENERATOR{Text.endc}
@@ -80,7 +80,7 @@ class Lamia:
 
     @staticmethod
     @decorate_text("Gracefully stopping...")
-    def __exit_lamia() -> NoReturn:
+    def __exit_lamia() -> None:
         """
         Exit lamia with farewell message.
         """
@@ -92,4 +92,4 @@ if __name__ == "__main__":
     network_scanners.GetNetworksAreas()
     Lamia().start_up()
 
-# VERSION 2.0
+# VERSION 2.2

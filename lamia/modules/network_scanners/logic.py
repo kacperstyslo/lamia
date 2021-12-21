@@ -10,7 +10,6 @@ __all__ = (
     "NetworksAreasScanner",
 )
 
-# PSL
 import asyncio
 import platform
 import socket
@@ -19,17 +18,19 @@ import re
 from os import path
 from pathlib import Path
 from threading import Thread
+from functools import partial
 from typing import Dict, List, Union, NoReturn, Set
 
-# third-party
 import getmac
 from pythonping import ping
 
-# Own
-from lamia.modules.network_scanners.const import ALL_PORTS_AND_SERVICES, OPERATING_SYSTEMS_NAMES
+from lamia.modules.network_scanners.const import (
+    ALL_PORTS_AND_SERVICES,
+    OPERATING_SYSTEMS_NAMES,
+)
 from lamia.modules.network_scanners.view import ui
 from lamia.modules.user_information import UserDeviceInformation
-from lamia.modules.untils import pause_script, Text, _Path
+from lamia.modules.untils import run_parallel, Text, _Path
 from lamia.exceptions import (
     PortNumberToSmallError,
     PortNumberToLargeError,
@@ -66,11 +67,9 @@ class NetworkScannersBase(UserDeviceInformation):
     SCANNER_MODULES = {}
 
     __slots__ = (
-        "_async_loop",
         "_victims_data",
         "_scanners_base_ui",
         "_coroutines_amount",
-        "_coroutines_timeout",
         "_victim_ip",
         "_victim_hostname",
         "_victim_mac_address",
@@ -85,11 +84,9 @@ class NetworkScannersBase(UserDeviceInformation):
 
     def __init__(self) -> NoReturn:
         super().__init__()
-        self._async_loop = asyncio.get_event_loop()
         self._victims_data = _Path()
         self._scanners_base_ui = ui.NetworkScannerBaseUI()
         self._coroutines_amount: int = 30
-        self._coroutines_timeout: float = 0.5
         self._victim_ip: str = ""
         self._victim_hostname: str = ""
         self._victim_mac_address: str = ""
@@ -106,7 +103,9 @@ class NetworkScannersBase(UserDeviceInformation):
         """
         Just running logic of already chosen Network Scanner modules.
         """
-        NetworkScannersBase.SCANNER_MODULES.get(cls.SCANNER_KEY).prepare_scanner()
+        NetworkScannersBase.SCANNER_MODULES.get(
+            cls.SCANNER_KEY
+        ).prepare_scanner()
 
     def chose_network_area_to_scan(self) -> NoReturn:
         """
@@ -130,7 +129,9 @@ class NetworkScannersBase(UserDeviceInformation):
             return [f"{correct_ip}{num}" for num in range(1, 255)]
         print(InvalidNetworkArea(".".join(ip_to_verify)))
 
-    def set_output_path(self, file_name: str, target: Union[str, List[str]]) -> NoReturn:
+    def set_output_path(
+        self, file_name: str, target: Union[str, List[str]]
+    ) -> NoReturn:
         """
         Generating output path basing on chosen network area "Network Scanner Intense" or chosen
         victim IP address "Network Scanner Single Target".
@@ -161,7 +162,7 @@ class NetworkScannersBase(UserDeviceInformation):
                     f"The given value is not an {Text.error}int{Text.endc} type!"
                 ) from wrong_input_type
 
-    def scan_victim_generally(self) -> NoReturn:
+    async def scan_victim_generally(self) -> NoReturn:
         """
         This function will call other fnc in NetworkScannerBase to get this below information
         about victim. Function will call:
@@ -172,9 +173,15 @@ class NetworkScannersBase(UserDeviceInformation):
         - self.__scan_victim_port_and_get_name_of_running_service_on_this_port to get victim
           open ports and services running on this ports
         """
-        self._async_loop.run_until_complete(self.__collect_hostname_and_operating_system_name())
-
-        self._victim_mac_address: str = getmac.get_mac_address(ip=self._victim_ip)
+        (
+            self._victim_hostname,
+            self._victim_operation_system_name,
+            self._victim_mac_address,
+        ) = await asyncio.gather(
+            self.__get_victim_hostname(),
+            self.__get_victim_operation_system_name(),
+            self.__get_victim_mac_address(),
+        )
 
         self._scanners_base_ui.show_captured_victim_data(
             victim_ip=self._victim_ip,
@@ -184,7 +191,12 @@ class NetworkScannersBase(UserDeviceInformation):
         )
 
         while self._port_range:
-            self._async_loop.run_until_complete(asyncio.wait(self.__run_port_scanner))
+            await run_parallel(
+                *[
+                    coroutine()
+                    for coroutine in self.__create_port_scanner_coroutines
+                ]
+            )
             del self._port_range[: self._coroutines_amount]
 
         self._scanners_base_ui.show_victim_opened_ports_with_services(
@@ -204,24 +216,15 @@ class NetworkScannersBase(UserDeviceInformation):
             return True
         return False
 
-    async def __collect_hostname_and_operating_system_name(self) -> NoReturn:
-        """
-        This function run two coroutines to get faster two below information about victim:
-        - victim hostname
-        - victim operating system name
-        of currently scanned victim.
-        """
-        self._victim_hostname: str = await asyncio.wait_for(
-            self.__get_victim_hostname(), timeout=self._coroutines_timeout
-        )
-        self._victim_operation_system_name: str = await asyncio.wait_for(
-            self.__get_victim_operation_system_name(), timeout=self._coroutines_timeout
-        )
+    async def __get_victim_mac_address(self) -> str:
+        await asyncio.sleep(0.01)
+        return getmac.get_mac_address(ip=self._victim_ip)
 
     async def __get_victim_hostname(self) -> str:
         """
         Just returning victim hostname if Lamia can get it by using socket module.
         """
+        await asyncio.sleep(0.01)
         try:
             return socket.gethostbyaddr(self._victim_ip)[0]
         except socket.herror:
@@ -231,25 +234,35 @@ class NetworkScannersBase(UserDeviceInformation):
         """
         This function will try to get victim operating system name by analyzing ICMP response.
         """
+        await asyncio.sleep(0.01)
         par_one: str = "-n" if platform.system().lower() == "windows" else "-c"
         par_two: str = "-w" if platform.system().lower() == "windows" else "-c"
         if platform.system().lower() == "windows":
-            command_after = ["ping", par_one, "1", par_two, "100", self._victim_ip]
+            command_after = [
+                "ping",
+                par_one,
+                "1",
+                par_two,
+                "100",
+                self._victim_ip,
+            ]
         else:
             command_after = ["ping", par_one, "1", self._victim_ip]
         try:
-            decoded_output: str = subprocess.check_output(command_after).decode("UTF-8")
+            decoded_output: str = subprocess.check_output(
+                command_after
+            ).decode("UTF-8")
             return OPERATING_SYSTEMS_NAMES.get(
-                re.findall(r"\bttl=\b\d{1,3}\b", decoded_output, flags=re.IGNORECASE)[0].split("=")[
-                    -1
-                ],
+                re.findall(
+                    r"\bttl=\b\d{1,3}\b", decoded_output, flags=re.IGNORECASE
+                )[0].split("=")[-1],
                 "Unknown",
             )
         except subprocess.CalledProcessError:
             return "Host in drop mode!"
 
     @property
-    def __run_port_scanner(self):
+    def __create_port_scanner_coroutines(self):
         """
         This function will create coroutines ("by default 30"). When these 30 coroutines complete
         their tasks, this function will return collected information by this coroutines.
@@ -257,38 +270,50 @@ class NetworkScannersBase(UserDeviceInformation):
         30 coroutines packages, but this time coroutines will get another ports to check. And this
         process will repeat until port_range exists.
         """
-
         return [
-            self.__scan_victim_port_and_get_name_of_running_service_on_this_port(
-                victim_ip=self._victim_ip, port=port
+            partial(
+                self.__scan_victim_port_and_get_name_of_running_service_on_this_port,
+                port=port,
             )
             for port in self._port_range[: self._coroutines_amount]
         ]
 
     async def __scan_victim_port_and_get_name_of_running_service_on_this_port(
-        self, victim_ip: str, port: int
+        self, port: int
     ) -> NoReturn:
         """
         This function will try to find out what victim ports are open. If port will be open module
         will get service name running on this opened port from static "ALL_PORTS_AND_SERVICES".
         """
+        await asyncio.sleep(0.001)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(0.001)
-        if not sock.connect_ex((victim_ip, port)):
-            self._opened_victim_ports_and_services[port] = ALL_PORTS_AND_SERVICES.get(port)
+        sock.settimeout(0.01)
+        if not sock.connect_ex((self._victim_ip, port)):
+            self._opened_victim_ports_and_services[
+                port
+            ] = ALL_PORTS_AND_SERVICES.get(port)
 
     def __save_captured_victim_data_locally(self) -> NoReturn:
         """
         After scanning this function will save all captured output in lamia/modules/output path.
         """
-        with open(self._victims_data.output_path, "a", encoding="utf-8") as victim_data:
+        with open(
+            self._victims_data.output_path, "a", encoding="utf-8"
+        ) as victim_data:
             victim_data.write(100 * "=" + "\n")
-            victim_data.write(f"Platform: {self._victim_operation_system_name}\n")
+            victim_data.write(
+                f"Platform: {self._victim_operation_system_name}\n"
+            )
             victim_data.write(f"HOST: {self._victim_hostname}\n")
             victim_data.write(f"IP: {self._victim_ip}\n")
             victim_data.write(f"MAC: {self._victim_mac_address}\n")
-            for port, service in self._opened_victim_ports_and_services.items():
-                victim_data.write(f"Open port: {port} with listening service: {service}\n")
+            for (
+                port,
+                service,
+            ) in self._opened_victim_ports_and_services.items():
+                victim_data.write(
+                    f"Open port: {port} with listening service: {service}\n"
+                )
             victim_data.write(100 * "=" + "\n")
             self._opened_victim_ports_and_services.clear()
 
@@ -351,7 +376,9 @@ class NetworkScannerIntense(NetworkScannersBase):
             target=self._network_area_to_scan,
         )
         self.specify_port_range()
-        self._scanners_base_ui.show_output_location(output_location=self._victims_data.output_path)
+        self._scanners_base_ui.show_output_location(
+            output_location=self._victims_data.output_path
+        )
         self.__run_intense_network_area_scan()
 
     def __run_intense_network_area_scan(self) -> NoReturn:
@@ -362,8 +389,10 @@ class NetworkScannerIntense(NetworkScannersBase):
         print(self._scanners_base_ui.show_start_up_scanning_message())
         for victim_ip in self._network_area_to_scan:
             if self.quick_check_if_victim_is_active(victim_ip):
-                self.scan_victim_generally()
-        self._scanners_base_ui.show_saved_victims_data(self._victims_data.output_path)
+                asyncio.run(self.scan_victim_generally())
+        self._scanners_base_ui.show_saved_victims_data(
+            self._victims_data.output_path
+        )
 
 
 class NetworkScannerSingleTarget(NetworkScannersBase):
@@ -399,12 +428,16 @@ class NetworkScannerSingleTarget(NetworkScannersBase):
         """
         self._scanner_single_target_ui.generate_chose_victim_ui()
         host_to_check_is_active = str(input("> "))
-        if len(host_to_check_is_active.split(".")) != 4 or not self.quick_check_if_victim_is_active(
+        if len(
+            host_to_check_is_active.split(".")
+        ) != 4 or not self.quick_check_if_victim_is_active(
             host_to_check_is_active
         ):
             print(InactiveHostError(host_to_check_is_active))
         elif self.quick_check_if_victim_is_active(host_to_check_is_active):
-            self.set_output_path(file_name="scanned_victim_", target=self._victim_ip)
+            self.set_output_path(
+                file_name="scanned_victim_", target=self._victim_ip
+            )
             self._scanners_base_ui.show_output_location(
                 output_location=self._victims_data.output_path
             )
@@ -415,8 +448,10 @@ class NetworkScannerSingleTarget(NetworkScannersBase):
         Here module already have all necessary information and can start scanning chosen victim.
         """
         print(self._scanners_base_ui.show_start_up_scanning_message())
-        self.scan_victim_generally()
-        self._scanners_base_ui.show_saved_victims_data(self._victims_data.output_path)
+        asyncio.run(self.scan_victim_generally())
+        self._scanners_base_ui.show_saved_victims_data(
+            self._victims_data.output_path
+        )
 
 
 class NetworksAreasScanner(NetworkScannersBase):
@@ -437,7 +472,9 @@ class NetworksAreasScanner(NetworkScannersBase):
             self.user_current_network_area[1],
         )
         self.output_path: str = path.join(
-            Path(__file__).parent.parent.parent, "output", "captured_networks_areas.txt"
+            Path(__file__).parent.parent.parent,
+            "output",
+            "captured_networks_areas.txt",
         )
         thread = Thread(target=self.__search_for_active_networks_areas)
         thread.daemon = True
@@ -451,9 +488,13 @@ class NetworksAreasScanner(NetworkScannersBase):
         network area where at least one host was active.
         """
         for num in range(0, 255):
-            network_area: str = f"{self.ip_octet_one + '.' + self.ip_octet_two + '.'}{num}.1"
+            network_area: str = (
+                f"{self.ip_octet_one + '.' + self.ip_octet_two + '.'}{num}.1"
+            )
             if ping(f"{network_area}", timeout=0.1, count=1).success():
-                with open(self.output_path, "a", encoding="utf-8") as captured_networks:
+                with open(
+                    self.output_path, "a", encoding="utf-8"
+                ) as captured_networks:
                     captured_networks.write(f"{network_area}\n")
 
     def __clear_duplicated_networks_areas(self) -> NoReturn:
@@ -462,7 +503,7 @@ class NetworksAreasScanner(NetworkScannersBase):
         networks areas."
         """
         with open(self.output_path, "r+", encoding="utf-8") as file:
-            captured_networks: Set[str] = set([line.strip() for line in file])
+            captured_networks: Set[str] = {line.strip() for line in file}
             file.truncate(0)
             file.seek(0)
             for network_area in captured_networks:
@@ -473,5 +514,5 @@ class NetworksAreasScanner(NetworkScannersBase):
         This module will return all scanned networks areas in List[str] format.
         """
         self.__clear_duplicated_networks_areas()
-        with open(self.output_path, "r", encoding="utf-8") as networks_ares:
+        with open(self.output_path, encoding="utf-8") as networks_ares:
             return [line.strip() for line in networks_ares]

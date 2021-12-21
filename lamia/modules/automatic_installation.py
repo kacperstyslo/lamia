@@ -1,7 +1,6 @@
 """
 This module will install all missing third part modules.
 """
-# PSL
 from os import name
 from subprocess import call
 from typing import NoReturn

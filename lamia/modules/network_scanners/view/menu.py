@@ -11,12 +11,10 @@ __all__ = (
     "NetworkScannerSingleTargetMenu",
 )
 
-# PSL
 from abc import ABC, abstractmethod
 from inspect import cleandoc
 from typing import NoReturn
 
-# Own
 from lamia.exceptions import WrongUserChoiceError
 from lamia.modules.untils import decorate_text, show_menu, Text, clear_terminal
 from lamia.modules.network_scanners import logic
@@ -63,7 +61,9 @@ class NetworkScannerBaseMenu:
 
     @staticmethod
     def run_chosen_scanner(scanner_key: str) -> NoReturn:
-        logic.NetworkScannersBase.SCANNER_MODULES[scanner_key]().prepare_scanner()
+        logic.NetworkScannersBase.SCANNER_MODULES[
+            scanner_key
+        ]().prepare_scanner()
 
 
 class NetworkScannerQuickMenu(NetworkScannerBaseMenu, MenuLayout):
@@ -78,8 +78,8 @@ class NetworkScannerQuickMenu(NetworkScannerBaseMenu, MenuLayout):
         show_menu(
             module_name="NETWORK SCANNER MODULE QUICK",
             menu_content=f"""
-            {Text.blue}QUICK{Text.endc} module will find all {Text.pass_g}ACTIVE{Text.endc} hosts in chosen network 
-            area and display their {Text.warning}IP{Text.endc} address. After scanning chosen network area, 
+            {Text.blue}QUICK{Text.endc} module will find all {Text.pass_g}ACTIVE{Text.endc} hosts in chosen network
+            area and display their {Text.warning}IP{Text.endc} address. After scanning chosen network area,
             output won't be saved!""",
         )
         menu_choice = str(input("> "))
@@ -101,8 +101,8 @@ class NetworkScannerIntenseMenu(NetworkScannerBaseMenu, MenuLayout):
         show_menu(
             module_name="NETWORK SCANNER INTENSE MODULE",
             menu_content=f"""
-           Intense module will search for active hosts in chosen network area, if module find a host, 
-           module will try to get as much information as possible about this active host. 
+           Intense module will search for active hosts in chosen network area, if module find a host,
+           module will try to get as much information as possible about this active host.
            For example, module will try to find the:
            -{Text.warning} IP ADDRESS {Text.endc}
            -{Text.warning} MAC ADDRESS {Text.endc}

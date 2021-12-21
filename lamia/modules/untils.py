@@ -7,10 +7,11 @@ __all__ = (
     "Text",
     "clear_terminal",
     "pause_script",
+    "run_parallel",
     "decorate_text",
 )
 
-# PSL
+import asyncio
 import sys
 from colorama import init
 from dataclasses import dataclass
@@ -19,7 +20,7 @@ from inspect import cleandoc
 from os import name, path, system
 from pathlib import Path
 from time import sleep
-from typing import NoReturn
+from typing import Any, Awaitable, NoReturn
 
 
 class _Path:
@@ -70,6 +71,10 @@ def clear_terminal() -> NoReturn:
     Clear terminal screen after calling.
     """
     system("cls") if name == "nt" else system("clear")
+
+
+async def run_parallel(*functions: Awaitable[Any]) -> NoReturn:
+    await asyncio.gather(*functions)
 
 
 def pause_script() -> NoReturn:

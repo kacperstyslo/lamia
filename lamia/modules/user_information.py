@@ -1,4 +1,3 @@
-# PSL
 import os
 import platform
 import sys
@@ -7,13 +6,11 @@ from inspect import cleandoc
 from time import sleep
 from typing import Dict, NoReturn
 
-# third-party
 import getmac
 import getpass
 import requests
 from geolite2 import geolite2
 
-# Own
 from .untils import clear_terminal, Text
 
 
@@ -50,7 +47,9 @@ class UserDeviceInformation:
         self._user_hostname: str = getpass.getuser()
         self._user_mac: str = getmac.get_mac_address()
         self._user_operating_system_version: str = platform.version()
-        self._user_operating_system_name: str = platform.system() + " " + platform.release()
+        self._user_operating_system_name: str = (
+            platform.system() + " " + platform.release()
+        )
         self._location: Dict[str, str] = {}
 
     @property
@@ -69,7 +68,7 @@ class UserDeviceInformation:
                 cleandoc(
                     f"""
                 {100 * f"{Text.error}-{Text.endc}"}
-                {Text.error} ERROR! {Text.endc}You must run script as root! 
+                {Text.error} ERROR! {Text.endc}You must run script as root!
                 Write: {Text.warning} sudo python3 refactor_file.py {Text.endc}
                 {100 * f"{Text.error}-{Text.endc}"}
                 """
@@ -79,7 +78,9 @@ class UserDeviceInformation:
 
     def __get_user_public_ip(self) -> NoReturn:
         try:
-            self._user_public_ip: str = requests.get("https://api.ipify.org").text
+            self._user_public_ip: str = requests.get(
+                "https://api.ipify.org"
+            ).text
         except requests.exceptions.ConnectionError:
             self._user_public_ip: str = "Unknown"
 
@@ -99,7 +100,10 @@ class UserDeviceInformation:
             self._city = "Unknown"
         self._country = location["country"]["names"]["en"]
         self._location = location["location"]
-        self._latitude, self._longitude = self._location["latitude"], self._location["longitude"]
+        self._latitude, self._longitude = (
+            self._location["latitude"],
+            self._location["longitude"],
+        )
 
     def get_user_device_information(self) -> str:
         """

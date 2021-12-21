@@ -9,7 +9,11 @@ __all__ = (
 
 from typing import Dict
 
-OPERATING_SYSTEMS_NAMES: Dict[str, str] = {"64": "Linux", "128": "Windows", "254": "Cisco"}
+OPERATING_SYSTEMS_NAMES: Dict[str, str] = {
+    "64": "Linux",
+    "128": "Windows",
+    "254": "Cisco",
+}
 ALL_PORTS_AND_SERVICES: Dict[int, str] = {
     3: "compressnet",
     5: "rje",
