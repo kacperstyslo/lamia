@@ -19,7 +19,7 @@ except ImportError:
     from pyfiglet import figlet_format
 
 from lamia.exceptions import WrongUserChoiceError
-from lamia.modules.untils import clear_terminal, decorate_text, Text
+from lamia.modules.untils import clear_terminal, decorate_text, TextColor
 from lamia.modules.user_information import UserDeviceInformation
 from lamia.modules import key_hook_generator, remote_control
 from lamia.modules import network_scanners
@@ -27,8 +27,8 @@ from lamia.modules import network_scanners
 
 class Lamia:
     """
-    This class has methods that allows user call modules built in lamia. After executing chosen
-    module lamia always will get back here.
+    This class has methods that allows user call modules built in lamia. After
+    executing chosen module lamia always will get back here.
     """
 
     def __repr__(self) -> str:
@@ -42,7 +42,7 @@ class Lamia:
             0: self.__exit_lamia,
         }
 
-    @decorate_text(figlet_format("Lamia   2 . 2"))
+    @decorate_text(figlet_format("Lamia   2 . 4"))
     def start_up(self):
         """
         When Lamia start's this function call build in Lamia functions in proper order.
@@ -55,19 +55,19 @@ class Lamia:
 
     def __lamia_menu(self) -> NoReturn:
         """
-        Render menu until user decide to exit. Allow user to chose module what is built in Lamia by
-        using built in Python 'input' command.
+        Render menu until user decide to exit. Allow user to chose module what is built
+        in Lamia by using built in Python 'input' command.
         """
         while True:
             clear_terminal()
             print(
                 cleandoc(
                     f"""
-        {42 * "-"}{Text.blue}LAMIA VER.2.2{Text.endc}{42 * "-"}
-        {Text.warning}1.NETWORK SCANNER{Text.endc}
-        {Text.warning}2.REMOTE CONTROL{Text.endc}
-        {Text.warning}3.KEY-HOOK GENERATOR{Text.endc}
-        {Text.warning}0.EXIT{Text.endc}
+        {42 * "-"}{TextColor.BLUE}LAMIA VER.2.4{TextColor.ENDC}{42 * "-"}
+        {TextColor.WARNING}1.NETWORK SCANNER{TextColor.ENDC}
+        {TextColor.WARNING}2.REMOTE CONTROL{TextColor.ENDC}
+        {TextColor.WARNING}3.KEY-HOOK GENERATOR{TextColor.ENDC}
+        {TextColor.WARNING}0.EXIT{TextColor.ENDC}
         {100 * "-"}"""
                 )
             )
@@ -92,4 +92,4 @@ if __name__ == "__main__":
     network_scanners.GetNetworksAreas()
     Lamia().start_up()
 
-# VERSION 2.2
+# VERSION 2.4

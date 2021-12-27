@@ -1,3 +1,6 @@
+"""
+This module will get important data from user device to correctly run lamia.
+"""
 import os
 import platform
 import sys
@@ -6,18 +9,18 @@ from inspect import cleandoc
 from time import sleep
 from typing import Dict, NoReturn
 
-import getmac
 import getpass
+import getmac
 import requests
 from geolite2 import geolite2
 
-from .untils import clear_terminal, Text
+from .untils import clear_terminal, TextColor
 
 
 class UserDeviceInformation:
     """
-    This module checks the compatibility of the user's device with Lamia and saves the necessary
-    user data.
+    This module checks the compatibility of the user's device with Lamia and saves the
+    necessary user data.
     """
 
     __slots__ = (
@@ -67,10 +70,10 @@ class UserDeviceInformation:
             print(
                 cleandoc(
                     f"""
-                {100 * f"{Text.error}-{Text.endc}"}
-                {Text.error} ERROR! {Text.endc}You must run script as root!
-                Write: {Text.warning} sudo python3 refactor_file.py {Text.endc}
-                {100 * f"{Text.error}-{Text.endc}"}
+                {100 * f"{TextColor.ERROR}-{TextColor.ENDC}"}
+                {TextColor.ERROR} ERROR! {TextColor.ENDC}You must run script as root!
+                Write: {TextColor.WARNING} sudo python3 refactor_file.py {TextColor.ENDC}
+                {100 * f"{TextColor.ERROR}-{TextColor.ENDC}"}
                 """
                 )
             )
@@ -78,18 +81,22 @@ class UserDeviceInformation:
 
     def __get_user_public_ip(self) -> NoReturn:
         try:
-            self._user_public_ip: str = requests.get(
-                "https://api.ipify.org"
-            ).text
+            self._user_public_ip: str = requests.get("https://api.ipify.org").text
         except requests.exceptions.ConnectionError:
             self._user_public_ip: str = "Unknown"
 
     def __show_user_public_ip(self) -> str:
         try:
             if self._user_public_ip != "Unknown":
-                return f"Public IP: {self._user_public_ip} {Text.pass_g} OK!{Text.endc}"
+                return (
+                    f"Public IP: {self._user_public_ip} {TextColor.PASS_G} "
+                    f"OK!{TextColor.ENDC}"
+                )
         except AttributeError:
-            return f"Public IP: {self._user_public_ip} {Text.error} CAN'T FIND!{Text.endc}"
+            return (
+                f"Public IP: {self._user_public_ip} {TextColor.ERROR} "
+                f"CAN'T FIND!{TextColor.ENDC}"
+            )
 
     def __get_user_device_location(self) -> NoReturn:
         reader = geolite2.reader()
@@ -108,7 +115,8 @@ class UserDeviceInformation:
     def get_user_device_information(self) -> str:
         """
         Caller: run.Lamia.start_up
-        This function call other functions in this module to prepare information about user device.
+        This function call other functions in this module to prepare information about
+        user device.
         """
         sleep(1)
         clear_terminal()
@@ -116,16 +124,16 @@ class UserDeviceInformation:
         self.__get_user_device_location()
         return cleandoc(
             f"""
-        {47 * "-"}{Text.warning} WAIT {Text.endc}{47 * "-"}
-        Platform: {self._user_operating_system_name} {Text.pass_g} OK! {Text.endc}
-        Version: {self._user_operating_system_version} {Text.pass_g} OK! {Text.endc}
-        IP: {self.user_ip} {Text.pass_g} OK! {Text.endc}
+        {47 * "-"}{TextColor.WARNING} WAIT {TextColor.ENDC}{47 * "-"}
+        Platform: {self._user_operating_system_name} {TextColor.PASS_G} OK! {TextColor.ENDC}
+        Version: {self._user_operating_system_version} {TextColor.PASS_G} OK! {TextColor.ENDC}
+        IP: {self.user_ip} {TextColor.PASS_G} OK! {TextColor.ENDC}
         {self.__show_user_public_ip()}
-        MAC: {self._user_mac} {Text.pass_g} OK! {Text.endc}
+        MAC: {self._user_mac} {TextColor.PASS_G} OK! {TextColor.ENDC}
         Country: {self._country} {"FOUND!" if self._user_public_ip != "Unknown" else "Can't Find"}
         City: {self._city} {"FOUND!" if self._city != "Unknown" else "Can't Find"}
         Longitude: {self._longitude} {"FOUND!" if self._city != "Unknown" else "Can't Find"}
         Latitude: {self._latitude} {"FOUND!" if self._city != "Unknown" else "Can't Find"}
-        {48 * "-"} {Text.pass_g} OK {Text.endc} {48 * "-"}
+        {48 * "-"} {TextColor.PASS_G} OK {TextColor.ENDC} {48 * "-"}
             """
         )

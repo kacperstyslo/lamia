@@ -1,12 +1,15 @@
 """
-This module stores all the logic of all network scanners. Most of logic is in "NetworkScannersBase"
-class, from this class other network scanner modules inherit different functions.
+This module stores all the logic of all network scanners. Most of logic is in
+"NetworkScannersBase" class, from this class other network scanners inherit different
+functions. By combining this different function we can get different types of networks
+scanners.
 """
 
 __all__ = (
-    "NetworkScannersBase",
+    "NetworkScannerBase",
     "NetworkScannerQuick",
     "NetworkScannerIntense",
+    "NetworkScannerSingleTarget",
     "NetworksAreasScanner",
 )
 
@@ -15,11 +18,13 @@ import platform
 import socket
 import subprocess
 import re
+
+from abc import abstractmethod, ABC
+from functools import partial
 from os import path
 from pathlib import Path
 from threading import Thread
-from functools import partial
-from typing import Dict, List, Union, NoReturn, Set
+from typing import Dict, List, Union, Optional, NoReturn, Set
 
 import getmac
 from pythonping import ping
@@ -30,7 +35,12 @@ from lamia.modules.network_scanners.const import (
 )
 from lamia.modules.network_scanners.view import ui
 from lamia.modules.user_information import UserDeviceInformation
-from lamia.modules.untils import run_parallel, Text, _Path
+from lamia.modules.untils import (
+    run_concurrently,
+    take_complete_fnc_name,
+    TextColor,
+    _Path,
+)
 from lamia.exceptions import (
     PortNumberToSmallError,
     PortNumberToLargeError,
@@ -38,18 +48,35 @@ from lamia.exceptions import (
     InactiveHostError,
 )
 
+from ..scanners_types import ScannerType
 
-class NetworkScannersBase(UserDeviceInformation):
+
+class NetworkScannerLayout(ABC):
+    """
+    This one function should be included in every network scanner. In this function we
+    can call ready-made functions from NetworkScannerBase in different ways to get
+    different network scanners.
+    """
+
+    @abstractmethod
+    def prepare_scanner(self, scanner_key: Optional[str]) -> NoReturn:
+        """
+        Prepare any of network scanner to able to scan.
+        """
+
+
+class NetworkScannerBase(UserDeviceInformation, NetworkScannerLayout):
     # pylint: disable=too-many-instance-attributes
     """
-    This class provides common (methods, fields) from all Scanners and also have method that
-    render menu trough which these scanners can be operated. Names of this scanners below:
+    This class provides common (methods, fields) from all Scanners and also have method
+    that render menu trough which these scanners can be operated. Names of this scanners
+    below:
     - NetworkScannerQuick (quick scan chosen network area)
     - NetworkScannerIntense (thorough scan selected network area)
     - NetworkScannerSingleTarget (thorough scan selected victim)
 
-    Modules, when they encounter active victims try to obtain various information about them, for
-    example:
+    Modules, when they encounter active victims try to obtain various information about
+    them, for example:
     ==================================================================================
     |NetworkScannerQuick will get:                                                   |
     |- IP address                                                                    |
@@ -63,8 +90,7 @@ class NetworkScannersBase(UserDeviceInformation):
     ===================================================================================
     """
 
-    SCANNER_KEY = ""
-    SCANNER_MODULES = {}
+    _SCANNER_TYPE = {}
 
     __slots__ = (
         "_victims_data",
@@ -92,30 +118,27 @@ class NetworkScannersBase(UserDeviceInformation):
         self._victim_mac_address: str = ""
         self._victim_operation_system_name: str = ""
         self._port_range: List[int] = []
-        self._network_area_to_scan: List[str] = []
+        self._network_area_to_scan: Optional[List[str]] = None
         self._opened_victim_ports_and_services: Dict[int, str] = {}
 
-    def __init_subclass__(cls) -> NoReturn:
-        NetworkScannersBase.SCANNER_MODULES[cls.SCANNER_KEY] = cls
+    def __init_subclass__(cls, scanner_key: str = "", **kwargs) -> NoReturn:
+        super().__init_subclass__(**kwargs)
+        if scanner_key:
+            cls._SCANNER_TYPE[scanner_key] = cls
 
-    @classmethod
-    def prepare_scanner(cls) -> NoReturn:
+    def prepare_scanner(self, scanner_key: str) -> NoReturn:
         """
         Just running logic of already chosen Network Scanner modules.
         """
-        NetworkScannersBase.SCANNER_MODULES.get(
-            cls.SCANNER_KEY
-        ).prepare_scanner()
+        self._SCANNER_TYPE.get(scanner_key).prepare_scanner()
 
     def chose_network_area_to_scan(self) -> NoReturn:
         """
         This method run forever until user chose correct network area to scan.
         """
-        while True:
+        while not isinstance(self._network_area_to_scan, list):
             self._scanners_base_ui.show_message_while_user_choosing_network_area()
             self._network_area_to_scan = self.__verify_network_area()
-            if isinstance(self._network_area_to_scan, list):
-                break
 
     @staticmethod
     def __verify_network_area() -> List[str]:
@@ -133,8 +156,8 @@ class NetworkScannersBase(UserDeviceInformation):
         self, file_name: str, target: Union[str, List[str]]
     ) -> NoReturn:
         """
-        Generating output path basing on chosen network area "Network Scanner Intense" or chosen
-        victim IP address "Network Scanner Single Target".
+        Generating output path basing on chosen network area "Network Scanner Intense"
+        or chosen victim IP address "Network Scanner Single Target".
         """
         if isinstance(target, list):
             target = ".".join(self._network_area_to_scan[0].split(".")[:3])
@@ -159,19 +182,19 @@ class NetworkScannersBase(UserDeviceInformation):
                     print(PortNumberToSmallError(port_range))
             except ValueError as wrong_input_type:
                 raise ValueError(
-                    f"The given value is not an {Text.error}int{Text.endc} type!"
+                    f"The given value is not an {TextColor.ERROR}int{TextColor.ENDC} type!"
                 ) from wrong_input_type
 
     async def scan_victim_generally(self) -> NoReturn:
         """
-        This function will call other fnc in NetworkScannerBase to get this below information
-        about victim. Function will call:
+        This function will call other fnc in NetworkScannerBase to get this below
+        information about victim. Function will call:
         - self.quick_check_if_victim_is_active to get victim IP ADDRESS
         - self.__get_victim_hostname to get victim HOSTNAME
         - self.__get_victim_operation_system_name to get victim OPERATING SYSTEM NAME
         - getmac.get_mac_address (third part module) to get victim MAC ADDRESS
-        - self.__scan_victim_port_and_get_name_of_running_service_on_this_port to get victim
-          open ports and services running on this ports
+        - self.__get_victim_port_and_service to get victim open ports and services
+          running on this ports
         """
         (
             self._victim_hostname,
@@ -191,11 +214,8 @@ class NetworkScannersBase(UserDeviceInformation):
         )
 
         while self._port_range:
-            await run_parallel(
-                *[
-                    coroutine()
-                    for coroutine in self.__create_port_scanner_coroutines
-                ]
+            await run_concurrently(
+                *[coroutine() for coroutine in self.__create_port_scanner_coroutines]
             )
             del self._port_range[: self._coroutines_amount]
 
@@ -232,7 +252,8 @@ class NetworkScannersBase(UserDeviceInformation):
 
     async def __get_victim_operation_system_name(self) -> str:
         """
-        This function will try to get victim operating system name by analyzing ICMP response.
+        This function will try to get victim operating system name by analyzing ICMP
+        response.
         """
         await asyncio.sleep(0.01)
         par_one: str = "-n" if platform.system().lower() == "windows" else "-c"
@@ -249,13 +270,11 @@ class NetworkScannersBase(UserDeviceInformation):
         else:
             command_after = ["ping", par_one, "1", self._victim_ip]
         try:
-            decoded_output: str = subprocess.check_output(
-                command_after
-            ).decode("UTF-8")
+            decoded_output: str = subprocess.check_output(command_after).decode("UTF-8")
             return OPERATING_SYSTEMS_NAMES.get(
-                re.findall(
-                    r"\bttl=\b\d{1,3}\b", decoded_output, flags=re.IGNORECASE
-                )[0].split("=")[-1],
+                re.findall(r"\bttl=\b\d{1,3}\b", decoded_output, flags=re.IGNORECASE)[
+                    0
+                ].split("=")[-1],
                 "Unknown",
             )
         except subprocess.CalledProcessError:
@@ -264,46 +283,44 @@ class NetworkScannersBase(UserDeviceInformation):
     @property
     def __create_port_scanner_coroutines(self):
         """
-        This function will create coroutines ("by default 30"). When these 30 coroutines complete
-        their tasks, this function will return collected information by this coroutines.
-        While port_range exist, scan_victim_generally will call this function again with another
-        30 coroutines packages, but this time coroutines will get another ports to check. And this
-        process will repeat until port_range exists.
+        This function will create coroutines ("by default 30"). When these 30 coroutines
+        complete their tasks, this function will return collected information by this
+        coroutines. While port_range exist, scan_victim_generally will call this
+        function again with another 30 coroutines packages, but this time coroutines
+        will get another ports to check. And this process will repeat until port_range
+        exists.
         """
         return [
             partial(
-                self.__scan_victim_port_and_get_name_of_running_service_on_this_port,
+                self.__get_victim_port_and_service,
                 port=port,
             )
             for port in self._port_range[: self._coroutines_amount]
         ]
 
-    async def __scan_victim_port_and_get_name_of_running_service_on_this_port(
-        self, port: int
-    ) -> NoReturn:
+    @take_complete_fnc_name("scan_victim_port_and_get_name_of_running_service_on_this_port")
+    async def __get_victim_port_and_service(self, port: int) -> NoReturn:
         """
-        This function will try to find out what victim ports are open. If port will be open module
-        will get service name running on this opened port from static "ALL_PORTS_AND_SERVICES".
+        This function will try to find out what victim ports are open. If port will be
+        open module will get service name running on this opened port from static
+        variable named "ALL_PORTS_AND_SERVICES".
         """
         await asyncio.sleep(0.001)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(0.01)
         if not sock.connect_ex((self._victim_ip, port)):
-            self._opened_victim_ports_and_services[
+            self._opened_victim_ports_and_services[port] = ALL_PORTS_AND_SERVICES.get(
                 port
-            ] = ALL_PORTS_AND_SERVICES.get(port)
+            )
 
     def __save_captured_victim_data_locally(self) -> NoReturn:
         """
-        After scanning this function will save all captured output in lamia/modules/output path.
+        After scanning this function will save all captured output in
+        lamia/modules/output path.
         """
-        with open(
-            self._victims_data.output_path, "a", encoding="utf-8"
-        ) as victim_data:
+        with open(self._victims_data.output_path, "a", encoding="utf-8") as victim_data:
             victim_data.write(100 * "=" + "\n")
-            victim_data.write(
-                f"Platform: {self._victim_operation_system_name}\n"
-            )
+            victim_data.write(f"Platform: {self._victim_operation_system_name}\n")
             victim_data.write(f"HOST: {self._victim_hostname}\n")
             victim_data.write(f"IP: {self._victim_ip}\n")
             victim_data.write(f"MAC: {self._victim_mac_address}\n")
@@ -318,12 +335,12 @@ class NetworkScannersBase(UserDeviceInformation):
             self._opened_victim_ports_and_services.clear()
 
 
-class NetworkScannerQuick(NetworkScannersBase):
+class NetworkScannerQuick(
+    NetworkScannerBase, NetworkScannerLayout, scanner_key=ScannerType.QUICK.value
+):
     """
     This module will quickly scan chosen network area to get active hosts.
     """
-
-    SCANNER_KEY: str = "1"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
@@ -341,8 +358,8 @@ class NetworkScannerQuick(NetworkScannersBase):
 
     def __run_quick_scan(self) -> NoReturn:
         """
-        Here module already have all necessary information and can start quick scan for chosen
-        network area.
+        Here module already have all necessary information and can start quick scan for
+        chosen network area.
         """
         active_victims: List[str] = []
         for victim_ip in self._network_area_to_scan:
@@ -351,17 +368,18 @@ class NetworkScannerQuick(NetworkScannersBase):
         self._scanner_quick_ui.show_quick_scan_output(active_victims)
 
 
-class NetworkScannerIntense(NetworkScannersBase):
+class NetworkScannerIntense(
+    NetworkScannerBase, NetworkScannerLayout, scanner_key=ScannerType.INTENSE.value
+):
     """
-    By using this module you can get below information about targets in chosen network area:
+    By using this module you can get below information about targets in chosen network
+    area:
     - IP address
     - MAC address
     - Hostname
     - Operating system name
     - Ports numbers that are open and services names running on these ports
     """
-
-    SCANNER_KEY: str = "2"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
@@ -383,19 +401,21 @@ class NetworkScannerIntense(NetworkScannersBase):
 
     def __run_intense_network_area_scan(self) -> NoReturn:
         """
-        Here module already have all necessary information and can start up all methods, which that
-        gathering information about victims for chosen network area.
+        Here module already have all necessary information and can start up all methods,
+        which that gathering information about victims for chosen network area.
         """
         print(self._scanners_base_ui.show_start_up_scanning_message())
         for victim_ip in self._network_area_to_scan:
             if self.quick_check_if_victim_is_active(victim_ip):
                 asyncio.run(self.scan_victim_generally())
-        self._scanners_base_ui.show_saved_victims_data(
-            self._victims_data.output_path
-        )
+        self._scanners_base_ui.show_saved_victims_data(self._victims_data.output_path)
 
 
-class NetworkScannerSingleTarget(NetworkScannersBase):
+class NetworkScannerSingleTarget(
+    NetworkScannerBase,
+    NetworkScannerLayout,
+    scanner_key=ScannerType.SINGLE_TARGET.value,
+):
     """
     By using this module you can get below information about chosen victim:
     - IP address
@@ -404,8 +424,6 @@ class NetworkScannerSingleTarget(NetworkScannersBase):
     - Operating system name
     - Ports numbers that are open and services names running on these ports
     """
-
-    SCANNER_KEY: str = "3"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
@@ -430,14 +448,10 @@ class NetworkScannerSingleTarget(NetworkScannersBase):
         host_to_check_is_active = str(input("> "))
         if len(
             host_to_check_is_active.split(".")
-        ) != 4 or not self.quick_check_if_victim_is_active(
-            host_to_check_is_active
-        ):
+        ) != 4 or not self.quick_check_if_victim_is_active(host_to_check_is_active):
             print(InactiveHostError(host_to_check_is_active))
         elif self.quick_check_if_victim_is_active(host_to_check_is_active):
-            self.set_output_path(
-                file_name="scanned_victim_", target=self._victim_ip
-            )
+            self.set_output_path(file_name="scanned_victim_", target=self._victim_ip)
             self._scanners_base_ui.show_output_location(
                 output_location=self._victims_data.output_path
             )
@@ -445,20 +459,20 @@ class NetworkScannerSingleTarget(NetworkScannersBase):
 
     def __run_single_victim_scan(self) -> NoReturn:
         """
-        Here module already have all necessary information and can start scanning chosen victim.
+        Here module already have all necessary information and can start scanning chosen
+        victim.
         """
         print(self._scanners_base_ui.show_start_up_scanning_message())
         asyncio.run(self.scan_victim_generally())
-        self._scanners_base_ui.show_saved_victims_data(
-            self._victims_data.output_path
-        )
+        self._scanners_base_ui.show_saved_victims_data(self._victims_data.output_path)
 
 
-class NetworksAreasScanner(NetworkScannersBase):
+class NetworksAreasScanner(NetworkScannerBase):
     r"""
-    This module runs in the background and scans network for others possible network areas that user
-    can latter scan more detailed using some of built in modules in Lamia. All captured network
-    areas will be saved in lamia\output\captured_networks_areas.txt
+    This module runs in the background and scans network for others possible network
+    areas that user can latter scan more detailed using some of built in modules in
+    Lamia. All captured network areas will be saved in
+    lamia\output\captured_networks_areas.txt
     """
 
     def __repr__(self) -> str:
@@ -472,7 +486,7 @@ class NetworksAreasScanner(NetworkScannersBase):
             self.user_current_network_area[1],
         )
         self.output_path: str = path.join(
-            Path(__file__).parent.parent.parent,
+            Path(__file__).parent.parent.parent.parent,
             "output",
             "captured_networks_areas.txt",
         )
@@ -482,19 +496,17 @@ class NetworksAreasScanner(NetworkScannersBase):
 
     def __search_for_active_networks_areas(self) -> NoReturn:
         """
-        This module will search for all possible network area that user is able to scan. It is
-        enough that one active host will be in some networks area and module will save this
-        network area. If user will call Network Scanner module this module will return all saved
-        network area where at least one host was active.
+        This module will search for all possible network area that user is able to scan.
+        It is enough that one active host will be in some networks area and module will
+        save this network area. If user will call Network Scanner module this module
+        will return all saved network area where at least one host was active.
         """
         for num in range(0, 255):
             network_area: str = (
                 f"{self.ip_octet_one + '.' + self.ip_octet_two + '.'}{num}.1"
             )
             if ping(f"{network_area}", timeout=0.1, count=1).success():
-                with open(
-                    self.output_path, "a", encoding="utf-8"
-                ) as captured_networks:
+                with open(self.output_path, "a", encoding="utf-8") as captured_networks:
                     captured_networks.write(f"{network_area}\n")
 
     def __clear_duplicated_networks_areas(self) -> NoReturn:

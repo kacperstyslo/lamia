@@ -3,24 +3,28 @@ This classes & functions are here because all lamia modules uses them.
 """
 
 __all__ = (
-    "_Path",
-    "Text",
+    "cast_variable_to_int",
+    "take_complete_fnc_name",
     "clear_terminal",
-    "pause_script",
-    "run_parallel",
     "decorate_text",
+    "pause_script",
+    "run_concurrently",
+    "show_menu",
+    "TextColor",
+    "_Path",
 )
 
 import asyncio
 import sys
-from colorama import init
 from dataclasses import dataclass
 from functools import wraps
 from inspect import cleandoc
 from os import name, path, system
 from pathlib import Path
 from time import sleep
-from typing import Any, Awaitable, NoReturn
+from typing import Any, Awaitable, NoReturn, Union
+
+from colorama import init
 
 
 class _Path:
@@ -54,16 +58,16 @@ class _Path:
 
 
 @dataclass
-class Text:
+class TextColor:
     """
     All used by Lamia notifications colors.
     """
 
-    endc: str = "\033[0m"
-    error: str = "\033[91m"
-    pass_g: str = "\033[92m"
-    warning: str = "\033[93m"
-    blue: str = "\033[94m"
+    BLUE: str = "\033[94m"
+    ERROR: str = "\033[91m"
+    ENDC: str = "\033[0m"
+    PASS_G: str = "\033[92m"
+    WARNING: str = "\033[93m"
 
 
 def clear_terminal() -> NoReturn:
@@ -73,11 +77,25 @@ def clear_terminal() -> NoReturn:
     system("cls") if name == "nt" else system("clear")
 
 
-async def run_parallel(*functions: Awaitable[Any]) -> NoReturn:
+def cast_variable_to_int(variable: Union[float, str]) -> Union[int, None]:
+    """
+    Cast value to int without error.
+    :param variable: number in float or string value type that will be cast to int value
+    """
+    return int(variable) if variable.isdigit() else None
+
+
+async def run_concurrently(*functions: Awaitable[Any]) -> NoReturn:
+    """
+    Run tasks concurrently. This module is used in network scanners.
+    """
     await asyncio.gather(*functions)
 
 
 def pause_script() -> NoReturn:
+    """
+    Pause lamia in any situation.
+    """
     system("pause") if name == "nt" else input("Press any key to continue...")
 
 
@@ -91,9 +109,9 @@ def show_menu(module_name: str, menu_content: str) -> NoReturn:
     print(
         cleandoc(
             f"""
-            {30 * "-"}{Text.blue} {module_name} {Text.endc}{30 * "-"}
+            {30 * "-"}{TextColor.BLUE} {module_name} {TextColor.ENDC}{30 * "-"}
             {menu_content}
-            Do you want to continue? {Text.warning}Y/N{Text.endc}
+            Do you want to continue? {TextColor.WARNING}Y/N{TextColor.ENDC}
             {100 * "-"}
             """.strip()
         )
@@ -104,12 +122,15 @@ def decorate_text(_text: str):
     def decorator(method):
         @wraps(method)
         def wrapper(*args, **kwargs):
+            """
+            This decorator will create the impression of writing text on the screen.
+            """
             clear_terminal()
             init(strip=not sys.stdout.isatty())
             for char in _text:
-                sys.stdout.write(f"{Text.blue}{char}{Text.endc}")
+                sys.stdout.write(f"{TextColor.BLUE}{char}{TextColor.ENDC}")
                 sys.stdout.flush()
-                if type(_text) is str:
+                if isinstance(_text, str):
                     sleep(0.05)
                 else:
                     sleep(0.01)
@@ -119,3 +140,19 @@ def decorate_text(_text: str):
         return wrapper
 
     return decorator
+
+
+def take_complete_fnc_name(full_fnc_name: str):
+    """
+    Take full function name, if it too long.
+    :param full_fnc_name: long, descriptive function name
+    """
+    def actual_decorator(fnc):
+        @wraps(fnc)
+        def wrapper(*args, **kwargs):
+            fnc.__name__ = full_fnc_name
+            return fnc(*args, **kwargs)
+
+        return wrapper
+
+    return actual_decorator

