@@ -4,7 +4,6 @@ All build in lamia exceptions.
 
 from inspect import cleandoc
 from time import sleep
-from typing import NoReturn
 
 from lamia.modules.untils import TextColor
 
@@ -14,7 +13,7 @@ class LamiaError(Exception):
     Base class for Lamia errors.
     """
 
-    def __init__(self, error_msg: str) -> NoReturn:
+    def __init__(self, error_msg: str) -> None:
         super().__init__()
         self._error_msg: str = error_msg
 
@@ -39,7 +38,7 @@ class PortNumberToSmallError(LamiaError):
     Raise this exception when user trys to scan port under 1.
     """
 
-    def __init__(self, to_small_port_value: int) -> NoReturn:
+    def __init__(self, to_small_port_value: int) -> None:
         super().__init__(
             f"Typed port value: {TextColor.ERROR}{to_small_port_value}{TextColor.ENDC} "
             f"is too small!\n Minimal port value is 1!"
@@ -52,7 +51,7 @@ class PortNumberToLargeError(LamiaError):
     Raise this exception when user tries to scan port over 9999.
     """
 
-    def __init__(self, to_large_port_value: int) -> NoReturn:
+    def __init__(self, to_large_port_value: int) -> None:
         super().__init__(
             f"Typed port value: {TextColor.ERROR}{to_large_port_value}"
             f"{TextColor.ENDC} is too big!\n Maximum port value is 9999!"
@@ -66,7 +65,7 @@ class WrongUserChoiceError(LamiaError):
     located.
     """
 
-    def __init__(self) -> NoReturn:
+    def __init__(self) -> None:
         super().__init__("Chosen option is not available in this module!")
 
 
@@ -76,7 +75,7 @@ class LocalSaveError(LamiaError):
     Raise this exception when Lamia can't save file on user device.
     """
 
-    def __init__(self) -> NoReturn:
+    def __init__(self) -> None:
         super().__init__("Lamia can't save the file locally! Try again!")
 
 
@@ -86,7 +85,7 @@ class NotCompatibleSystemYetError(LamiaError):
     Raise this exception when user system is not compatible with Lamia.
     """
 
-    def __init__(self, not_supported_system: str) -> NoReturn:
+    def __init__(self, not_supported_system: str) -> None:
         super().__init__(
             f"This module is not yet ready for {not_supported_system} system!"
         )
@@ -98,7 +97,7 @@ class InactiveHostError(LamiaError):
     Raise this exception when user chose inactive host.
     """
 
-    def __init__(self, inactive_victim: str) -> NoReturn:
+    def __init__(self, inactive_victim: str) -> None:
         super().__init__(f"Selected host: {inactive_victim} is inactive!")
 
 
@@ -108,7 +107,7 @@ class InvalidNetworkArea(LamiaError):
     Raise this exception when user typed network area incorrectly.
     """
 
-    def __init__(self, wrong_network_area: str) -> NoReturn:
+    def __init__(self, wrong_network_area: str) -> None:
         super().__init__(f"Typed network area: {wrong_network_area} is incorrect!")
 
 
@@ -118,5 +117,5 @@ class WrongEmailCredentials(LamiaError):
     Raise this exception when user provides wrong credentials to sender email.
     """
 
-    def __init__(self) -> NoReturn:
+    def __init__(self) -> None:
         super().__init__("Wrong credentials!")

@@ -2,6 +2,6 @@
 Aliases for network scanners modules.
 """
 from .view.menu import NetworkScannerBaseMenu as ScannersView
-from .functionality.scanners_functionality import (
+from .functionality.network_scanner.area import (
     NetworksAreasScanner as GetNetworksAreas,
 )

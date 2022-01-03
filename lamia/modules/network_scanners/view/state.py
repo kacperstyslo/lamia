@@ -1,13 +1,13 @@
 """
-All networks scanners types built in Lamia.
+All networks scanners views built in Lamia.
 """
 
-__all__ = ("ScannerType",)
+__all__ = ("ScannerView",)
 
 from enum import auto, Enum
 
 
-class ScannerType(Enum):
+class ScannerView(Enum):
     """
     Types of network scanners.
     """

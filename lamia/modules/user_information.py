@@ -40,7 +40,7 @@ class UserDeviceInformation:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
-    def __init__(self) -> NoReturn:
+    def __init__(self) -> None:
         self._city: str = ""
         self._country: str = ""
         self._latitude: str = ""

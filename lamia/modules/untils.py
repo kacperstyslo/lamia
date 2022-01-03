@@ -28,7 +28,7 @@ from colorama import init
 
 
 class _Path:
-    def __init__(self) -> NoReturn:
+    def __init__(self) -> None:
         self._output_path: str = ""
         self._script_path: str = ""
 
@@ -147,6 +147,7 @@ def take_complete_fnc_name(full_fnc_name: str):
     Take full function name, if it too long.
     :param full_fnc_name: long, descriptive function name
     """
+
     def actual_decorator(fnc):
         @wraps(fnc)
         def wrapper(*args, **kwargs):

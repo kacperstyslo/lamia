@@ -23,7 +23,7 @@ class RemoteControlModules(UserDeviceInformation):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
-    def __init__(self) -> NoReturn:
+    def __init__(self) -> None:
         super().__init__()
         self.check_default_ananke: str = ""
 
@@ -268,6 +268,7 @@ class SSH:
     """
     Lamia SSH manger.
     """
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 

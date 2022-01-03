@@ -24,15 +24,22 @@ from lamia.modules.untils import (
     TextColor,
 )
 
-from ..scanners_types import ScannerType
-from lamia.modules.network_scanners.functionality import scanners_functionality
+from .state import ScannerView
+from ..functionality.network_scanner.state import ScannerType
+from ..functionality.network_scanner.base.state import BaseScannerType
 
 
 class MenuLayout(ABC):
+    """
+    This function must be included in all networks scanners menus.
+    """
+
     @classmethod
     @abstractmethod
     def generate_menu_content(cls) -> NoReturn:
-        pass
+        """
+        Implement the network scanner text menu here.
+        """
 
 
 class NetworkScannerBaseMenu:
@@ -49,7 +56,10 @@ class NetworkScannerBaseMenu:
 
     @classmethod
     @decorate_text("NETWORK SCANNER LOADING...")
-    def show_modules(cls) -> NoReturn:
+    def show_network_scanners(cls) -> NoReturn:
+        """
+        Show available network scanners.
+        """
         clear_terminal()
         print(
             cleandoc(
@@ -70,14 +80,15 @@ class NetworkScannerBaseMenu:
             print(WrongUserChoiceError())
 
     @staticmethod
-    def run_chosen_scanner(scanner_key: str) -> NoReturn:
-        scanners_functionality.NetworkScannerBase._SCANNER_TYPE[
-            scanner_key
-        ]().prepare_scanner()
+    def run_chosen_scanner(scanner_key: int) -> NoReturn:
+        """
+        Run logic of network scanner.
+        """
+        BaseScannerType.BASE.value().prepare_scanner(scanner_key)
 
 
 class NetworkScannerQuickMenu(
-    NetworkScannerBaseMenu, MenuLayout, scanner_key=ScannerType.QUICK.value
+    NetworkScannerBaseMenu, MenuLayout, scanner_key=ScannerView.QUICK.value
 ):
     """
     Customized menu to NetworkScannerQuick module.
@@ -95,13 +106,13 @@ class NetworkScannerQuickMenu(
         )
         menu_choice = str(input("> "))
         if menu_choice.upper() == "Y":
-            cls.__base__().run_chosen_scanner(1)
+            cls.__base__().run_chosen_scanner(ScannerType.QUICK.value)
         elif not menu_choice.upper() == "N":
             print(WrongUserChoiceError())
 
 
 class NetworkScannerIntenseMenu(
-    NetworkScannerBaseMenu, MenuLayout, scanner_key=ScannerType.INTENSE.value
+    NetworkScannerBaseMenu, MenuLayout, scanner_key=ScannerView.INTENSE.value
 ):
     """
     Customized menu to NetworkScannerIntense module.
@@ -124,13 +135,13 @@ class NetworkScannerIntenseMenu(
         )
         menu_choice: str = str(input("> "))
         if menu_choice.upper() == "Y":
-            cls.__base__().run_chosen_scanner(2)
+            cls.__base__().run_chosen_scanner(ScannerType.INTENSE.value)
         elif not menu_choice.upper() == "N":
             print(WrongUserChoiceError())
 
 
 class NetworkScannerSingleTargetMenu(
-    NetworkScannerBaseMenu, MenuLayout, scanner_key=ScannerType.SINGLE_TARGET.value
+    NetworkScannerBaseMenu, MenuLayout, scanner_key=ScannerView.SINGLE_TARGET.value
 ):
     """
     Customized menu to NetworkScannerSingleTarget module.
@@ -153,6 +164,6 @@ class NetworkScannerSingleTargetMenu(
         )
         menu_choice: str = str(input("> "))
         if menu_choice.upper() == "Y":
-            cls.__base__().run_chosen_scanner(3)
+            cls.__base__().run_chosen_scanner(ScannerType.SINGLE_TARGET.value)
         elif not menu_choice.upper() == "N":
             print(WrongUserChoiceError())

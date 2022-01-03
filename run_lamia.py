@@ -34,9 +34,9 @@ class Lamia:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
-    def __init__(self) -> NoReturn:
+    def __init__(self) -> None:
         self.__lamia_modules: Dict[int, Callable] = {
-            1: network_scanners.ScannersView.show_modules,
+            1: network_scanners.ScannersView.show_network_scanners,
             2: remote_control.RemoteControlModules().remote_control_startup,
             3: key_hook_generator.KeyHookModule().check_system_compatibility,
             0: self.__exit_lamia,
@@ -48,9 +48,7 @@ class Lamia:
         When Lamia start's this function call build in Lamia functions in proper order.
         """
         print(UserDeviceInformation().get_user_device_information())
-        system("pause") if name == "nt" else input(
-            "Press any key to continue..."
-        )
+        system("pause") if name == "nt" else input("Press any key to continue...")
         self.__lamia_menu()
 
     def __lamia_menu(self) -> NoReturn:

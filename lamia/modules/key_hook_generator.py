@@ -29,7 +29,7 @@ class KeyHookModule(UserDeviceInformation):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
-    def __init__(self) -> NoReturn:
+    def __init__(self) -> None:
         super().__init__()
         self._key_hook = _Path()
         self._key_hook.script_path = "key_hook.pyw"
