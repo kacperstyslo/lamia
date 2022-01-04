@@ -35,7 +35,7 @@ class Lamia:
         return f"{self.__class__.__name__}"
 
     def __init__(self) -> None:
-        self.__lamia_modules: Dict[int, Callable] = {
+        self.__lamia_modules: Dict[int, Callable[[None], None]] = {
             1: network_scanners.ScannersView.show_network_scanners,
             2: remote_control.RemoteControlModules().remote_control_startup,
             3: key_hook_generator.KeyHookModule().check_system_compatibility,

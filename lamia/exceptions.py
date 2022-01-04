@@ -21,8 +21,7 @@ class LamiaError(Exception):
         print(
             cleandoc(
                 f"""
-{46 * f"{TextColor.ERROR}-{TextColor.ENDC}"}{TextColor.ERROR} ERROR! {TextColor.ENDC}
-{46 * f"{TextColor.ERROR}-{TextColor.ENDC}"}
+{46 * f"{TextColor.ERROR}-{TextColor.ENDC}"}{TextColor.ERROR} ERROR! {TextColor.ENDC}{46 * f"{TextColor.ERROR}-{TextColor.ENDC}"}
 {self._error_msg}
 {100 * f"{TextColor.ERROR}-{TextColor.ENDC}"}
                 """

@@ -15,7 +15,7 @@ import re
 
 from abc import abstractmethod, ABC
 from functools import partial
-from typing import Callable, Dict, List, Union, Optional, NoReturn
+from typing import Awaitable, Callable, Dict, List, Union, Optional, NoReturn, Type
 
 import getmac
 from pythonping import ping
@@ -47,7 +47,7 @@ class NetworkScannerLayout(ABC):
     """
 
     @abstractmethod
-    def prepare_scanner(self, scanner_type: Optional[Callable]) -> NoReturn:
+    def prepare_scanner(self, scanner_type: Optional[Type]) -> NoReturn:
         """
         Prepare any of network scanner to able to scan.
         """
@@ -108,12 +108,12 @@ class NetworkScannerBase(UserDeviceInformation, NetworkScannerLayout):
         self._port_range: List[int] = []
         self._opened_victim_ports_and_services: Dict[int, str] = {}
 
-    def prepare_scanner(self, scanner_type) -> NoReturn:
+    def prepare_scanner(self, scanner_type: Type) -> NoReturn:
         """
         Just running logic of already chosen Network Scanner.
         Also dependency injection is performed (NetworkScannerBase to any NetworkScanner).
         :param scanner_type: instance of some network scanner
-        :type scanner_type: Callable
+        :type scanner_type: Type
         """
         scanner_type(NetworkScannerBase()).prepare_scanner()
 
@@ -292,7 +292,9 @@ class NetworkScannerBase(UserDeviceInformation, NetworkScannerLayout):
             return "Host in drop mode!"
 
     @property
-    def __create_port_scanner_coroutines(self):
+    def __create_port_scanner_coroutines(
+        self,
+    ) -> List[Callable[[int], Awaitable[None]]]:
         """
         This function will create coroutines ("by default 30"). When these 30 coroutines
         complete their tasks, this function will return collected information by this
@@ -300,6 +302,8 @@ class NetworkScannerBase(UserDeviceInformation, NetworkScannerLayout):
         function again with another 30 coroutines packages, but this time coroutines
         will get another ports to check. And this process will repeat until port_range
         exists.
+        :return: List of coroutines
+        :rtype: List[Callable[[int], Awaitable[None]]]
         """
         return [
             partial(

@@ -37,7 +37,7 @@ class NetworksAreasScanner(UserDeviceInformation):
             self.user_current_network_area[1],
         )
         self.output_path: str = path.join(
-            Path(__file__).parent.parent.parent.parent,
+            Path(__file__).parent.parent.parent.parent.parent,
             "output",
             "captured_networks_areas.txt",
         )
