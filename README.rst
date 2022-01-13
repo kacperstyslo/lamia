@@ -36,14 +36,18 @@ Technologies
 
 Setup
 ------
-In Lamia use only keyboard to navigate throughout modules :exclamation:
+In Lamia use only keyboard to navigate throughout modules :exclamation: 
+
 If you let, Lamia will **install** all required packages **automatically**.
 
-.. code-block:: python
-    On Windows:
-    python run_lamia.py
-    On Linux:
-    python3 run_lamia.py
+On Windows::
+
+   python run_lamia.py
+
+On Linux::
+
+   python3 run_lamia.py
+
  
 More detailed information about modules
 ---------------------------------------
