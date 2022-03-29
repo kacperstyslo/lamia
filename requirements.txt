@@ -2,7 +2,7 @@ pywin32==301
 pynput==1.7.3
 pyfiglet==0.8.post1
 colorama==0.4.4
-paramiko==2.7.2
+paramiko==2.10.1
 getmac==0.8.2
 pythonping==1.1.0
 requests==2.26.0
